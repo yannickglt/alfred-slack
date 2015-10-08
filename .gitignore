@@ -1,2 +1,2 @@
-config.json
-src/cache/*
+src/scripts/vendor/
+src/.idea

@@ -1,0 +1,61 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "88ebd113171ca6aba2dda1c15f23f82e",
+    "packages": [
+        {
+            "name": "frlnc/php-slack",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Frlnc/php-slack.git",
+                "reference": "b73a6b6ea1282a3f70d29d7c2c77e2d3dc89c88d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Frlnc/php-slack/zipball/b73a6b6ea1282a3f70d29d7c2c77e2d3dc89c88d",
+                "reference": "b73a6b6ea1282a3f70d29d7c2c77e2d3dc89c88d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "~0.9",
+                "phpunit/phpunit": "~4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Frlnc\\Slack\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Connor Parks",
+                    "email": "connor@connorvg.tv"
+                }
+            ],
+            "description": "A lightweight PHP implementation of Slack's API.",
+            "keywords": [
+                "slack"
+            ],
+            "time": "2015-04-17 18:43:15"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}

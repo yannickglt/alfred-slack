@@ -1,0 +1,13 @@
+{
+    "name": "yannickglt/alfred-slack",
+    "description": "Alfred workflow to interact with Slack",
+    "require": {
+        "frlnc/php-slack": "~1.0"
+    },
+    "authors": [
+        {
+            "name": "Yannick Galatol",
+            "email": "yannick.galatol@gmail.com"
+        }
+    ]
+}

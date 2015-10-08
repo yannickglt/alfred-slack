@@ -10,15 +10,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>4AE536BC-8D80-4362-B0E9-1B4ED487859B</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-			</dict>
-			<dict>
-				<key>destinationuid</key>
-				<string>31838B4E-9584-4A61-8BD9-6191F02E1358</string>
+				<string>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -39,19 +31,21 @@
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>concurrently</key>
+				<false/>
 				<key>escaping</key>
-				<integer>68</integer>
+				<integer>100</integer>
 				<key>script</key>
 				<string>$query = "{query}";
-$position = 'output';
-require_once 'slack.php';</string>
+$action = 'openChannel';
+require_once 'scripts/slack.php';</string>
 				<key>type</key>
 				<integer>1</integer>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.output.script</string>
+			<string>alfred.workflow.action.script</string>
 			<key>uid</key>
-			<string>4AE536BC-8D80-4362-B0E9-1B4ED487859B</string>
+			<string>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
@@ -64,12 +58,20 @@ require_once 'slack.php';</string>
 				<integer>68</integer>
 				<key>keyword</key>
 				<string>slack</string>
+				<key>queuedelaycustom</key>
+				<integer>1</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
 				<key>runningsubtext</key>
 				<string>Loading...</string>
 				<key>script</key>
 				<string>$query = "{query}";
-$position = 'input';
-require_once 'slack.php';</string>
+$action = 'getChannels';
+require_once 'scripts/slack.php';</string>
 				<key>subtext</key>
 				<string>Open in Slack</string>
 				<key>title</key>
@@ -86,44 +88,12 @@ require_once 'slack.php';</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>applescript</key>
-				<string>on alfred_script(q)
-	if q is not "/refresh" and q does not start with "/token" then
-		tell application "Slack"
-			Activate
-			delay 1
-			tell application "System Events"
-				Keystroke "t" using command down
-				Keystroke q
-				Keystroke return
-			end tell
-		end tell
-	end if
-end alfred_script</string>
-				<key>cachescript</key>
-				<false/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.applescript</string>
-			<key>uid</key>
-			<string>31838B4E-9584-4A61-8BD9-6191F02E1358</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
 	</array>
 	<key>readme</key>
 	<string></string>
 	<key>uidata</key>
 	<dict>
-		<key>31838B4E-9584-4A61-8BD9-6191F02E1358</key>
-		<dict>
-			<key>ypos</key>
-			<real>80</real>
-		</dict>
-		<key>4AE536BC-8D80-4362-B0E9-1B4ED487859B</key>
+		<key>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</key>
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
