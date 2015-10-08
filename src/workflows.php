@@ -445,6 +445,31 @@ class Workflows {
 
 		return $out;
 	}
+
+	/**
+	* Description:
+	* Returns data from a local cache file
+	*
+	* @param file - filename to read the cache data from
+	* @return false if the file cannot be found, the file data if found. If the file
+	*			format is json encoded, then a json object is returned.
+	*/
+	public function readPath( $a )
+	{
+		if ( file_exists( $a ) ):
+			if ( file_exists( $this->path.'/'.$a ) ):
+				$a = $this->path.'/'.$a;
+			endif;
+		elseif ( file_exists( $this->data."/".$a ) ):
+			$a = $this->data."/".$a;
+		elseif ( file_exists( $this->cache."/".$a ) ):
+			$a = $this->cache."/".$a;
+		else:
+			return false;
+		endif;
+		
+		return $a;
+	}
 	
 	public function filetime( $a )
 	{
