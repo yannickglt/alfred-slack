@@ -55,14 +55,18 @@ class SlackController {
         $this->addResults($results, $search);
     }
 
-    public function getConfigActionsAction ($search, $param) {
+    public function setTokenAction ($token = null) {
+        
         $results = [
             [
-                'title' => '--token',
-                'data' => [ 'token' => $param ]
+                'id' => 'token',
+                'title' => '--token <token>',
+                'description' => 'Set the Slack token',
+                'data' => Utils::toObject([ 'type' => 'token', 'token' => $token ])
             ]
         ];
-        $this->addResults($results, $search);
+
+        $this->addResults($results, 'token');
     }
 
     public function openChannelAction ($data) {
@@ -88,6 +92,10 @@ class SlackController {
         }
 
         $this->model->postMessage($id, $data->message);
+    }
+
+    public function saveTokenAction ($token) {
+        $this->model->setToken($token);
     }
 
     private function addResults ($array, $search) {

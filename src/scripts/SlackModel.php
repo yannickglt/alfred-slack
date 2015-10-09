@@ -8,7 +8,6 @@ use Frlnc\Slack\Http\SlackResponseFactory;
 
 class SlackModel {
 
-    private static $token = 'xoxp-2443699468-2467108799-2498781179-cf1538';
     private $commander;
 	private $workflows;
 
@@ -20,7 +19,10 @@ class SlackModel {
     private function initCommander () {
         $interactor = new CurlInteractor;
         $interactor->setResponseFactory(new SlackResponseFactory);
-        $this->commander = new Commander(self::$token, $interactor);
+        $token = $this->getToken();
+        if (!empty($token)) {
+            $this->commander = new Commander($token, $interactor);
+        }
     }
 
     public function getProfileIcon ($user) {
@@ -108,6 +110,15 @@ class SlackModel {
             $im = $this->openIm($userId);
             return $im->channel->id;
         }
+    }
+
+    public function getToken () {
+        return $this->workflows->read('token');
+    }
+
+    public function setToken ($token) {
+        $this->workflows->write($token, 'token');
+        $this->initCommander();
     }
 
     public function postMessage ($channel, $message, $asBot = false) {

@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL);
+//error_reporting(E_ALL);
 
 require_once 'SlackRouter.php';
 require_once 'SlackController.php';

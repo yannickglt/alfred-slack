@@ -4,7 +4,7 @@ class SlackRouter {
 
 	private static $routingOrder = [
 		[
-			'name' => 'getConfigActions',
+			'name' => 'setToken',
 			'type' => 'input'
 		],
 		[
@@ -62,15 +62,16 @@ class SlackRouter {
 		return false;
 	}
 
-	private static function checkGetConfigActions ($query) {
+	private static function checkSetToken ($query) {
 		$arr = explode(' ', $query);
 		$configAction = $arr[0];
-		$params = array_slice($arr, 1);
 
-		if (strpos($configAction, '--') === 0) {
+		if (strpos($configAction, '--token') === 0) {
+			$params = [];
+			array_shift($arr);
 			return [
-				'action' => 'getConfigActions',
-				'params' => $params
+				'action' => 'setToken',
+				'params' => $arr
 			];
 		}
 		return false;
@@ -98,6 +99,15 @@ class SlackRouter {
 	}
 
 	private static function checkSaveToken ($query) {
+		$tokenData = json_decode($query);
+
+		if ($tokenData->type === 'token') {
+			return [
+				'action' => 'saveToken',
+				'params' => [$tokenData->token]
+			];
+		}
+
 		return false;
 	}
 
