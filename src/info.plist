@@ -37,7 +37,7 @@
 				<integer>100</integer>
 				<key>script</key>
 				<string>$query = "{query}";
-$action = 'openChannel';
+$input = false;
 require_once 'scripts/slack.php';</string>
 				<key>type</key>
 				<integer>1</integer>
@@ -70,7 +70,7 @@ require_once 'scripts/slack.php';</string>
 				<string>Loading...</string>
 				<key>script</key>
 				<string>$query = "{query}";
-$action = 'getChannels';
+$input = true;
 require_once 'scripts/slack.php';</string>
 				<key>subtext</key>
 				<string>Open in Slack</string>

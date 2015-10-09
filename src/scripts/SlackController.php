@@ -15,32 +15,32 @@ class SlackController {
         $this->results = [];
     }
 
-    public function getChannelsAction ($search) {
+    public function getChannelsAction ($search, $message = null) {
         $results = [];
 
         $auth = $this->model->getAuth();
 
-        $channels = $this->model->getChannels();
+        $channels = $this->model->getChannels(true);
         foreach ($channels as $channel) {
             $results[] = [
                 'id' => $channel->id,
                 'title' => '#'.$channel->name,
                 'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
-                'data' => Utils::extend($channel, [ 'auth' => $auth ])
+                'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth, 'message' => $message ])
             ];
         }
 
-        $groups = $this->model->getGroups();
+        $groups = $this->model->getGroups(true);
         foreach ($groups as $group) {
             $results[] = [
                 'id' => $group->id,
                 'title' => '#'.$group->name,
                 'description' => 'Group - ' . count($group->members) . ' members',
-                'data' => Utils::extend($group, [ 'auth' => $auth ])
+                'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth, 'message' => $message ])
             ];
         }
 
-        $users = $this->model->getUsers();
+        $users = $this->model->getUsers(true);
         foreach ($users as $user) {
             $icon = $this->model->getProfileIcon($user);
             $results[] = [
@@ -48,17 +48,46 @@ class SlackController {
                 'title' => '@'.$user->name,
                 'description' => 'User - ' . $user->profile->real_name,
                 'icon' => $icon,
-                'data' => Utils::extend($user, [ 'auth' => $auth ])
+                'data' => Utils::extend($user, [ 'type' => 'user', 'auth' => $auth, 'message' => $message ])
             ];
         }
 
         $this->addResults($results, $search);
     }
 
+    public function getConfigActionsAction ($search, $param) {
+        $results = [
+            [
+                'title' => '--token',
+                'data' => [ 'token' => $param ]
+            ]
+        ];
+        $this->addResults($results, $search);
+    }
+
     public function openChannelAction ($data) {
-        $data = json_decode($data);
-        $url = 'slack://channel?id='.$data->id.'&team='.$data->auth->team_id;
+
+        $id = $data->id;
+
+        // Get the IM id if a user
+        if ($data->type === 'user') {
+            $id = $this->model->getImIdByUserId($data->id);
+        }
+
+        $url = 'slack://channel?id='.$id.'&team='.$data->auth->team_id;
         Utils::openUrl($url);
+    }
+
+    public function sendMessageAction ($data) {
+
+        $id = $data->id;
+
+        // Get the IM id if a user
+        if ($data->type === 'user') {
+            $id = $this->model->getImIdByUserId($data->id);
+        }
+
+        $this->model->postMessage($id, $data->message);
     }
 
     private function addResults ($array, $search) {

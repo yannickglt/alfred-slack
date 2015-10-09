@@ -9,9 +9,11 @@ use Frlnc\Slack\Http\SlackResponseFactory;
 class SlackModel {
 
     private static $token = 'xoxp-2443699468-2467108799-2498781179-cf1538';
-	private $commander;
+    private $commander;
+	private $workflows;
 
 	public function __construct () {
+        $this->workflows = Utils::getWorkflows();
         $this->initCommander();
 	}
 
@@ -22,52 +24,93 @@ class SlackModel {
     }
 
     public function getProfileIcon ($user) {
-    	$workflows = Utils::getWorkflows();
-        $icon = $workflows->readPath('user.image.'.$user->id);
+        $icon = $this->workflows->readPath('user.image.'.$user->id);
         if ($icon === false) {
-            $workflows->write(file_get_contents($user->profile->image_24), 'user.image.'.$user->id);
-            $icon = $workflows->readPath('user.image.'.$user->id);
+            $this->workflows->write(file_get_contents($user->profile->image_24), 'user.image.'.$user->id);
+            $icon = $this->workflows->readPath('user.image.'.$user->id);
         }
         return $icon;
     }
 
     public function getAuth () {
-    	$workflows = Utils::getWorkflows();
-        $auth = $workflows->read('auth');
+        $auth = $this->workflows->read('auth');
         if ($auth === false) {
             $auth = $this->commander->execute('auth.test')->getBody();
-            $workflows->write($auth, 'auth');
+            $this->workflows->write($auth, 'auth');
         }
         return $auth;
     }
 
-    public function getChannels () {
-    	$workflows = Utils::getWorkflows();
-        $channels = $workflows->read('channels');
+    public function getChannels ($excludeArchived = false) {
+        $channels = $this->workflows->read('channels');
         if ($channels === false) {
-            $channels = $this->commander->execute('channels.list')->getBody()['channels'];
-            $workflows->write($channels, 'channels');
+            $params = [];
+            if ($excludeArchived === true) {
+                $params['exclude_archived'] = '1';
+            }
+            $channels = $this->commander->execute('channels.list', $params)->getBody()['channels'];
+            $this->workflows->write($channels, 'channels');
         }
         return $channels;
     }
 
-    public function getGroups () {
-    	$workflows = Utils::getWorkflows();
-        $groups = $workflows->read('groups');
+    public function getGroups ($excludeArchived = false) {
+        $groups = $this->workflows->read('groups');
         if ($groups === false) {
-            $groups = $this->commander->execute('groups.list')->getBody()['groups'];
-            $workflows->write($groups, 'groups');
+            $params = [];
+            if ($excludeArchived === true) {
+                $params['exclude_archived'] = '1';
+            }
+            $groups = $this->commander->execute('groups.list', $params)->getBody()['groups'];
+            $this->workflows->write($groups, 'groups');
         }
         return $groups;
     }
 
-    public function getUsers () {
-    	$workflows = Utils::getWorkflows();
-        $users = $workflows->read('users');
+    public function getIms ($excludeDeleted = false) {
+        $ims = $this->workflows->read('ims');
+        if ($ims === false) {
+            $ims = $this->commander->execute('im.list')->getBody()['ims'];
+            if ($excludeDeleted === true) {
+                $ims = Utils::filter($ims, [ 'is_user_deleted' => false ]);
+            }
+            $this->workflows->write($ims, 'ims');
+        }
+        return $ims;
+    }
+
+    public function openIm ($userId) {
+        if (!isset($userId)) {
+            throw new Exception('The parameter "userId" is mandatory.');
+        }
+        return Utils::toObject($this->commander->execute('im.open', [ 'user' => $userId ])->getBody());
+    }
+
+    public function getUsers ($excludeDeleted = false) {
+        $users = $this->workflows->read('users');
         if ($users === false) {
             $users = $this->commander->execute('users.list')->getBody()['members'];
-            $workflows->write($users, 'users');
+            if ($excludeDeleted === true) {
+                $users = Utils::filter($users, [ 'deleted' => false ]);
+            }
+            $this->workflows->write($users, 'users');
         }
         return $users;
+    }
+
+    public function getImIdByUserId ($userId) {
+        // Get the IM id if a user
+        $ims = $this->getIms(true);
+        $im = Utils::find($ims, [ 'user' => $userId ]);
+        if (!empty($im)) {
+            return $im->id;
+        } else {
+            $im = $this->openIm($userId);
+            return $im->channel->id;
+        }
+    }
+
+    public function postMessage ($channel, $message, $asBot = false) {
+        return $this->commander->execute('chat.postMessage', [ 'channel' => $channel, 'text' => $message, 'as_user' => !$asBot ])->getBody();
     }
 }

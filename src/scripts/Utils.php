@@ -4,13 +4,58 @@ require_once 'workflows.php';
 
 class Utils {
 
-    public static $icon = 'slack.png';
+    public static $icon = 'icon.png';
 
 	private static $_workflows = null;
+
+	private static function matches ($predicate) {
+		if (is_callable($predicate)) {
+			return $predicate;
+		} else {
+			return function ($element, $index) use ($predicate) {
+				if (is_object($predicate) || is_array($predicate)) {
+					$element = (array) $element;
+					foreach ($predicate as $key => $value) {
+						if ($element[$key] !== $value) {
+							return false;
+						}
+					}
+					return true;
+				} else {
+					return ($element === $predicate);
+				}
+			};
+		}
+	}
 
 	public static function extend ($a, $b) {
 		return (object) array_merge((array) $a, (array) $b);
 	}
+
+	public static function find ($array, $predicate) {
+		$fn = self::matches($predicate);
+		foreach ($array as $key => $value) {
+			if ($fn($value, $key)) {
+				return $value;
+			}
+		}
+		return;
+	}
+
+	public static function filter ($array, $predicate) {
+		return array_filter($array, self::matches($predicate));
+	}
+	
+	public static function toArray ($d) {
+        if (is_object($d)) {
+            $d = get_object_vars($d);
+        }
+        return is_array($d) ? array_map(__METHOD__, $d) : $d;
+    }
+
+    public static function toObject ($d) {
+        return is_array($d) ? (object) array_map(__METHOD__, $d) : $d;
+    }
 
 	public static function debug ($var) {
         ob_start();
