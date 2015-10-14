@@ -1,9 +1,11 @@
 <?php
 
 require_once 'vendor/autoload.php';
+require_once 'CustomCommander.php';
+require_once 'MultiCurlInteractor.php';
 
-use Frlnc\Slack\Core\Commander;
-use Frlnc\Slack\Http\CurlInteractor;
+use Frlnc\Slack\Core\CustomCommander;
+use Frlnc\Slack\Http\MultiCurlInteractor;
 use Frlnc\Slack\Http\SlackResponseFactory;
 
 class SlackModel {
@@ -17,19 +19,21 @@ class SlackModel {
 	}
 
     private function initCommander () {
-        $interactor = new CurlInteractor;
+        $interactor = new MultiCurlInteractor;
         $interactor->setResponseFactory(new SlackResponseFactory);
         $token = $this->getToken();
         if (!empty($token)) {
-            $this->commander = new Commander($token, $interactor);
+            $this->commander = new CustomCommander($token, $interactor);
         }
     }
 
-    public function getProfileIcon ($user) {
-        $icon = $this->workflows->readPath('user.image.'.$user->id);
+    public function getProfileIcon ($userId) {
+        $icon = $this->workflows->readPath('user.image.'.$userId);
         if ($icon === false) {
-            $this->workflows->write(file_get_contents($user->profile->image_24), 'user.image.'.$user->id);
-            $icon = $this->workflows->readPath('user.image.'.$user->id);
+            $users = $this->getUsers(true);
+            $users = Utils::filter($users, [ 'id' => $userId ]);
+            $this->workflows->write(file_get_contents($users[0]->profile->image_24), 'user.image.'.$userId);
+            $icon = $this->workflows->readPath('user.image.'.$userId);
         }
         return $icon;
     }
@@ -39,6 +43,7 @@ class SlackModel {
         if ($auth === false) {
             $auth = $this->commander->execute('auth.test')->getBody();
             $this->workflows->write($auth, 'auth');
+            $auth = $this->workflows->read('auth');
         }
         return $auth;
     }
@@ -52,6 +57,7 @@ class SlackModel {
             }
             $channels = $this->commander->execute('channels.list', $params)->getBody()['channels'];
             $this->workflows->write($channels, 'channels');
+            $channels = $this->workflows->read('channels');
         }
         return $channels;
     }
@@ -65,6 +71,7 @@ class SlackModel {
             }
             $groups = $this->commander->execute('groups.list', $params)->getBody()['groups'];
             $this->workflows->write($groups, 'groups');
+            $groups = $this->workflows->read('groups');
         }
         return $groups;
     }
@@ -77,6 +84,7 @@ class SlackModel {
                 $ims = Utils::filter($ims, [ 'is_user_deleted' => false ]);
             }
             $this->workflows->write($ims, 'ims');
+            $ims = $this->workflows->read('ims');
         }
         return $ims;
     }
@@ -96,6 +104,7 @@ class SlackModel {
                 $users = Utils::filter($users, [ 'deleted' => false ]);
             }
             $this->workflows->write($users, 'users');
+            $users = $this->workflows->read('users');
         }
         return $users;
     }
@@ -123,5 +132,49 @@ class SlackModel {
 
     public function postMessage ($channel, $message, $asBot = false) {
         return $this->commander->execute('chat.postMessage', [ 'channel' => $channel, 'text' => $message, 'as_user' => !$asBot ])->getBody();
+    }
+
+    public function getChannelHistory ($channelId) {
+        return $this->commander->execute('channels.history', [ 'channel' => $channelId ])->getBody()['messages'];
+    }
+
+    public function getGroupHistory ($channelId) {
+        return $this->commander->execute('groups.history', [ 'channel' => $groupId ])->getBody()['messages'];
+    }
+
+    public function getImHistory ($imId) {
+        return $this->commander->execute('im.history', [ 'channel' => $imId ])->getBody()['messages'];
+    }
+
+    public function markAllAsRead () {
+        $now = time();
+        $responses = [];
+
+        function getBody ($e) {
+            return $e->getBody();
+        }
+
+        $channelParams = [];
+        $channels = $this->getChannels();
+        foreach ($channels as $channel) {
+            $channelParams[] = [ 'command' => 'channels.mark', 'parameters' => [ 'channel' => $channel->id, 'ts' => $now ] ];
+        }
+        $responses['channels'] = array_map('getBody', $this->commander->executeAll($channelParams));
+
+        $groupParams = [];
+        $groups = $this->getGroups();
+        foreach ($groups as $group) {
+            $groupParams[] = [ 'command' => 'groups.mark', 'parameters' => [ 'channel' => $group->id, 'ts' => $now ] ];
+        }
+        $responses['groups'] = array_map('getBody', $this->commander->executeAll($groupParams));
+
+        $imParams = [];
+        $ims = $this->getIms();
+        foreach ($ims as $im) {
+            $imParams[] = [ 'command' => 'im.mark', 'parameters' => [ 'channel' => $im->id, 'ts' => $now ] ];
+        }
+        $responses['ims'] = array_map('getBody', $this->commander->executeAll($imParams));
+
+        return $responses;
     }
 }

@@ -12,7 +12,7 @@ class Utils {
 		if (is_callable($predicate)) {
 			return $predicate;
 		} else {
-			return function ($element, $index) use ($predicate) {
+			return function ($element) use ($predicate) {
 				if (is_object($predicate) || is_array($predicate)) {
 					$element = (array) $element;
 					foreach ($predicate as $key => $value) {
@@ -34,8 +34,8 @@ class Utils {
 
 	public static function find ($array, $predicate) {
 		$fn = self::matches($predicate);
-		foreach ($array as $key => $value) {
-			if ($fn($value, $key)) {
+		foreach ($array as $value) {
+			if ($fn($value)) {
 				return $value;
 			}
 		}
@@ -43,7 +43,7 @@ class Utils {
 	}
 
 	public static function filter ($array, $predicate) {
-		return array_filter($array, self::matches($predicate));
+		return array_values(array_filter($array, self::matches($predicate)));
 	}
 	
 	public static function toArray ($d) {

@@ -4,11 +4,15 @@ class SlackRouter {
 
 	private static $routingOrder = [
 		[
-			'name' => 'setToken',
+			'name' => 'listConfigs',
 			'type' => 'input'
 		],
 		[
 			'name' => 'getChannelsWithMessage',
+			'type' => 'input'
+		],
+		[
+			'name' => 'getChannelHistory',
 			'type' => 'input'
 		],
 		[
@@ -17,6 +21,10 @@ class SlackRouter {
 		],
 		[
 			'name' => 'saveToken',
+			'type' => 'output'
+		],
+		[
+			'name' => 'markAllAsRead',
 			'type' => 'output'
 		],
 		[
@@ -50,7 +58,7 @@ class SlackRouter {
 	
 	private static function checkGetChannelsWithMessage ($query) {
 		$firstSpace = strpos($query, ' ');
-		if ($firstSpace !== false) {
+		if (($firstSpace !== false) && ($firstSpace < strlen($query) - 1)) {
 			$channel = substr($query, 0, $firstSpace);
 			$message = substr($query, $firstSpace + 1);
 
@@ -61,16 +69,27 @@ class SlackRouter {
 		}
 		return false;
 	}
+	
+	private static function checkGetChannelHistory ($query) {
+		$firstSpace = strpos($query, ' ');
+		if (($firstSpace !== false) && ($firstSpace === strlen($query) - 1)) {
+			$channel = substr($query, 0, $firstSpace);
 
-	private static function checkSetToken ($query) {
+			return [
+				'action' => 'getChannelHistory',
+				'params' => [$channel]
+			];
+		}
+		return false;
+	}
+
+	private static function checkListConfigs ($query) {
 		$arr = explode(' ', $query);
 		$configAction = $arr[0];
 
-		if (strpos($configAction, '--token') === 0) {
-			$params = [];
-			array_shift($arr);
+		if (strpos($configAction, '--') === 0) {
 			return [
-				'action' => 'setToken',
+				'action' => 'listConfigs',
 				'params' => $arr
 			];
 		}
@@ -99,12 +118,24 @@ class SlackRouter {
 	}
 
 	private static function checkSaveToken ($query) {
-		$tokenData = json_decode($query);
+		$data = json_decode($query);
 
-		if ($tokenData->type === 'token') {
+		if ($data->type === 'token') {
 			return [
 				'action' => 'saveToken',
-				'params' => [$tokenData->token]
+				'params' => [$data->token]
+			];
+		}
+
+		return false;
+	}
+
+	private static function checkMarkAllAsRead ($query) {
+		$data = json_decode($query);
+
+		if ($data->type === 'mark') {
+			return [
+				'action' => 'markAllAsRead'
 			];
 		}
 
