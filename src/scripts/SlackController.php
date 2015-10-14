@@ -143,7 +143,6 @@ class SlackController {
                 break;
             case 'user':
                 $history = $this->model->getImHistory($this->model->getImIdByUserId($results[0]['id']));
-                $icon = $this->model->getProfileIcon($message['user']);
                 break;
         }
 
@@ -154,7 +153,7 @@ class SlackController {
                 'id' => $message['ts'],
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $icon,
+                'icon' => ($results[0]['type'] === 'user') ? $this->model->getProfileIcon($message['user']) : null,
                 'data' => $results[0]['data']
             ];
         }
