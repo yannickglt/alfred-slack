@@ -69,7 +69,7 @@ class SlackController {
         $results = [
             [
                 'id' => 'token',
-                'title' => '--token <token>',
+                'title' => '--token',
                 'description' => 'Set the Slack token',
                 'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ])
             ],
@@ -192,7 +192,7 @@ class SlackController {
 
         $this->notify('Message sent successfully to ' . $title);
     }
-    
+
     public function saveTokenAction ($token) {
         $this->model->setToken($token);
         $this->notify('Token saved successfully');
