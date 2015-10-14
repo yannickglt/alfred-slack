@@ -15,6 +15,7 @@ class SlackModel {
 
 	public function __construct () {
         $this->workflows = Utils::getWorkflows();
+        $this->defineTimeZone();
         $this->initCommander();
 	}
 
@@ -24,7 +25,6 @@ class SlackModel {
         $token = $this->getToken();
         if (!empty($token)) {
             $this->commander = new CustomCommander($token, $interactor);
-            $this->defineTimeZone();
         }
     }
 
@@ -150,12 +150,7 @@ class SlackModel {
     }
 
     public function defineTimeZone () {
-        $auth = $this->getAuth();
-        $user = Utils::find($this->getUsers(), [ 'id' =>  $auth->user_id ]);
-        $tz = 'UTC';
-        if (!is_null($user)) {
-            $tz = $user->tz;
-        }
+        $tz = exec( 'tz=`ls -l /etc/localtime` && echo ${tz#*/zoneinfo/}' );
         date_default_timezone_set($tz);
     }
 
