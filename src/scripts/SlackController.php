@@ -8,6 +8,8 @@ class SlackController {
     private $model;
     private $workflows;
     private $results;
+    private $isRendered = false;
+    private $isNotified = false;
     
     public function __construct () {
         $this->workflows = Utils::getWorkflows();
@@ -55,7 +57,7 @@ class SlackController {
         $this->results = $this->filterResults($results, $search);
         if (!is_null($message)) {
             $firstResult = $this->results[0];
-            $firstResult['title'] = 'Sends a message to ' . $firstResult['title'];
+            $firstResult['title'] = 'Sends "'.$message.'" to ' . $firstResult['title'];
             $this->results = [$firstResult];
         }
 
@@ -76,6 +78,12 @@ class SlackController {
                 'title' => '--mark',
                 'description' => 'Mark all as read',
                 'data' => Utils::toObject([ 'type' => 'mark' ])
+            ],
+            [
+                'id' => 'refresh',
+                'title' => '--refresh',
+                'description' => 'Refresh the cache',
+                'data' => Utils::toObject([ 'type' => 'refresh' ])
             ]
         ];
 
@@ -125,15 +133,17 @@ class SlackController {
         $results = $this->filterResults($results, $search);
 
         $history = [];
+        $icon = null;
         switch($results[0]['type']) {
             case 'channel':
-                $history = $this->model->getChannekHistory($results[0]['id']);
+                $history = $this->model->getChannelHistory($results[0]['id']);
                 break;
             case 'group':
                 $history = $this->model->getGroupHistory($results[0]['id']);
                 break;
             case 'user':
                 $history = $this->model->getImHistory($this->model->getImIdByUserId($results[0]['id']));
+                $icon = $this->model->getProfileIcon($message['user']);
                 break;
         }
 
@@ -141,10 +151,10 @@ class SlackController {
             $date = new DateTime();
             $date->setTimestamp($message['ts']);
             $this->results[] = [
-                'id' => $message['id'],
+                'id' => $message['ts'],
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $this->model->getProfileIcon($message['user']),
+                'icon' => $icon,
                 'data' => $results[0]['data']
             ];
         }
@@ -168,21 +178,58 @@ class SlackController {
     public function sendMessageAction ($data) {
 
         $id = $data->id;
+        $title = $data->name;
 
         // Get the IM id if a user
         if ($data->type === 'user') {
             $id = $this->model->getImIdByUserId($data->id);
+            $title = '@' . $title;
+        } else {
+            $title = '#' . $title;
         }
 
         $this->model->postMessage($id, $data->message);
-    }
 
+        $this->notify('Message sent successfully to ' . $title);
+    }
+    
     public function saveTokenAction ($token) {
         $this->model->setToken($token);
+        $this->notify('Token saved successfully');
+    }
+
+    public function refreshCacheAction () {
+        $this->model->refreshCache();
+        $this->notify('Cache refresh successfully');
     }
 
     public function markAllAsReadAction () {
         $this->model->markAllAsRead();
+    }
+
+    private function render () {
+        if ($this->isNotified) {
+            throw new Exception('Cannot use the method "render" if the method "notify" was called');
+        }
+
+        foreach ($this->results as $result) {
+            $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
+            $this->workflows->result($result['id'], json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['title'].' ');
+        }
+
+        $this->isRendered = true;
+
+        echo $this->workflows->toxml();
+    }
+
+    private function notify ($message) {
+        if ($this->isRendered) {
+            throw new Exception('Cannot use the method "render" if the method "notify" was called');
+        }
+
+        $this->isNotified = true;
+
+        echo $message;
     }
 
     private function filterResults ($array, $search) {
@@ -259,11 +306,4 @@ class SlackController {
         return $return;
     }
 
-    private function render () {
-        foreach ($this->results as $result) {
-            $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
-            $this->workflows->result($result['id'], json_encode($result['data']), $result['title'], $result['description'], $icon);
-        }
-        echo $this->workflows->toxml();
-    }
 }

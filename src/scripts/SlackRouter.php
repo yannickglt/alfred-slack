@@ -24,6 +24,10 @@ class SlackRouter {
 			'type' => 'output'
 		],
 		[
+			'name' => 'refreshCache',
+			'type' => 'output'
+		],
+		[
 			'name' => 'markAllAsRead',
 			'type' => 'output'
 		],
@@ -136,6 +140,18 @@ class SlackRouter {
 		if ($data->type === 'mark') {
 			return [
 				'action' => 'markAllAsRead'
+			];
+		}
+
+		return false;
+	}
+
+	private static function checkRefreshCache ($query) {
+		$data = json_decode($query);
+
+		if ($data->type === 'refresh') {
+			return [
+				'action' => 'refreshCache'
 			];
 		}
 

@@ -6,6 +6,17 @@
 	<string></string>
 	<key>connections</key>
 	<dict>
+		<key>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>43648B07-3CF9-4E47-B15C-042D2EABCDDB</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
 		<key>slack</key>
 		<array>
 			<dict>
@@ -52,6 +63,29 @@ require_once 'scripts/slack.php';</string>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>output</key>
+				<integer>0</integer>
+				<key>removeextension</key>
+				<false/>
+				<key>sticky</key>
+				<false/>
+				<key>title</key>
+				<string>{query}</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>43648B07-3CF9-4E47-B15C-042D2EABCDDB</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
@@ -59,13 +93,13 @@ require_once 'scripts/slack.php';</string>
 				<key>keyword</key>
 				<string>slack</string>
 				<key>queuedelaycustom</key>
-				<integer>1</integer>
+				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
 				<false/>
 				<key>queuedelaymode</key>
 				<integer>0</integer>
 				<key>queuemode</key>
-				<integer>1</integer>
+				<integer>2</integer>
 				<key>runningsubtext</key>
 				<string>Loading...</string>
 				<key>script</key>
@@ -93,6 +127,11 @@ require_once 'scripts/slack.php';</string>
 	<string></string>
 	<key>uidata</key>
 	<dict>
+		<key>43648B07-3CF9-4E47-B15C-042D2EABCDDB</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
 		<key>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</key>
 		<dict>
 			<key>ypos</key>

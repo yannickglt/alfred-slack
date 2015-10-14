@@ -24,6 +24,7 @@ class SlackModel {
         $token = $this->getToken();
         if (!empty($token)) {
             $this->commander = new CustomCommander($token, $interactor);
+            $this->defineTimeZone();
         }
     }
 
@@ -31,9 +32,11 @@ class SlackModel {
         $icon = $this->workflows->readPath('user.image.'.$userId);
         if ($icon === false) {
             $users = $this->getUsers(true);
-            $users = Utils::filter($users, [ 'id' => $userId ]);
-            $this->workflows->write(file_get_contents($users[0]->profile->image_24), 'user.image.'.$userId);
-            $icon = $this->workflows->readPath('user.image.'.$userId);
+            $user = Utils::find($users, [ 'id' => $userId ]);
+            if (!is_null($user)) {
+                $this->workflows->write(file_get_contents($user->profile->image_24), 'user.image.'.$userId);
+                $icon = $this->workflows->readPath('user.image.'.$userId);
+            }
         }
         return $icon;
     }
@@ -100,11 +103,11 @@ class SlackModel {
         $users = $this->workflows->read('users');
         if ($users === false) {
             $users = $this->commander->execute('users.list')->getBody()['members'];
-            if ($excludeDeleted === true) {
-                $users = Utils::filter($users, [ 'deleted' => false ]);
-            }
             $this->workflows->write($users, 'users');
             $users = $this->workflows->read('users');
+        }
+        if ($excludeDeleted === true) {
+            $users = Utils::filter($users, [ 'deleted' => false ]);
         }
         return $users;
     }
@@ -138,12 +141,51 @@ class SlackModel {
         return $this->commander->execute('channels.history', [ 'channel' => $channelId ])->getBody()['messages'];
     }
 
-    public function getGroupHistory ($channelId) {
+    public function getGroupHistory ($groupId) {
         return $this->commander->execute('groups.history', [ 'channel' => $groupId ])->getBody()['messages'];
     }
 
     public function getImHistory ($imId) {
         return $this->commander->execute('im.history', [ 'channel' => $imId ])->getBody()['messages'];
+    }
+
+    public function defineTimeZone () {
+        $auth = $this->getAuth();
+        $user = Utils::find($this->getUsers(), [ 'id' =>  $auth->user_id ]);
+        $tz = 'UTC';
+        if (!is_null($user)) {
+            $tz = $user->tz;
+        }
+        date_default_timezone_set($tz);
+    }
+
+    public function refreshCache () {
+
+        // Refresh auth
+        $this->workflows->delete('auth');
+        $this->getAuth();
+
+        // Refresh channels
+        $this->workflows->delete('channels');
+        $this->getChannels();
+        
+        // Refresh groups
+        $this->workflows->delete('groups');
+        $this->getGroups();
+        
+        // Refresh user icons
+        foreach ($this->getUsers() as $user) {
+            $this->workflows->delete('user.image.' . $user->id);
+            $this->getProfileIcon($user->id);
+        }
+
+        // Refresh users
+        $this->workflows->delete('users');
+        $this->getUsers();
+        
+        // Refresh ims
+        $this->workflows->delete('ims');
+        $this->getIms();
     }
 
     public function markAllAsRead () {
