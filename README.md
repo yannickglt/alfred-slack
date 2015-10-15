@@ -14,11 +14,31 @@ Open conversation with a contact in Slack
 4. Enjoy!
 
 # To use
-Open a channel, group or user room
-`slack <channel/group/user>`
+- Open a channel or group room in the Slack app:
 
-List messages from a specific channel, group or user
-`slack <channel/group/user> `
+```
+slack <channel/group>
+```
+![image](https://cloud.githubusercontent.com/assets/1006426/10527597/a4c81c44-7391-11e5-9009-625d1e6957f1.png)
 
-Send a message to a channel, group or user
-`slack <channel/group/user> <message>`
+
+- Open a user room in the Slack app:
+
+```
+slack <user>
+```
+![image](https://cloud.githubusercontent.com/assets/1006426/10527601/aa77ab3c-7391-11e5-9e04-1b937ef35206.png)
+
+- List messages from a specific channel, group or user:
+
+```
+slack <channel/group/user>
+```
+![image](https://cloud.githubusercontent.com/assets/1006426/10527030/918dd7f2-738e-11e5-9ea1-4bf74a0dd9cb.png)
+
+- Send a message to a channel, group or user:
+
+```
+slack <channel/group/user> <message>
+```
+![image](https://cloud.githubusercontent.com/assets/1006426/10527561/6966d26c-7391-11e5-8907-ee2999e3ef36.png)
