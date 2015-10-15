@@ -20,6 +20,10 @@ class SlackRouter {
 			'type' => 'input'
 		],
 		[
+			'name' => 'saveTokenUnsafe',
+			'type' => 'output'
+		],
+		[
 			'name' => 'saveToken',
 			'type' => 'output'
 		],
@@ -127,6 +131,19 @@ class SlackRouter {
 		if ($data->type === 'token') {
 			return [
 				'action' => 'saveToken',
+				'params' => [$data->token]
+			];
+		}
+
+		return false;
+	}
+
+	private static function checkSaveTokenUnsafe ($query) {
+		$data = json_decode($query);
+
+		if ($data->type === 'token-unsafe') {
+			return [
+				'action' => 'saveTokenUnsafe',
 				'params' => [$data->token]
 			];
 		}

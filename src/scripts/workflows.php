@@ -522,4 +522,49 @@ class Workflows {
 		return $temp;
 	}
 
+	/**
+	 * Return a password set previously in the system keychain
+	 * Status may equal 44 if no password is defined for this service and this account 
+	 * @param $account - the name of the account the password is for
+	 * @param $service - the name of the service, by default it equals the bundle id
+	 * @param string - the password
+	 */
+	public function getPassword ($account, $service = null)
+	{
+		if ( is_null( $service ) ):
+			$service = $this->bundle;
+		endif;
+
+        $password = exec("security 2>&1 find-generic-password -s $service -a $account -w", $output, $status);
+        //var_dump($password);
+        //var_dump("security 2>&1 > /dev/null find-generic-password -s $service -a $account -w");exit;
+        
+        return ($status === 0) ? $password : null;
+	}
+
+	/**
+	 * Store a password in the system keychain
+	 * Status may equal 45 if a password is already defined for this service and this account 
+	 * @param $account - the name of the account the password is for
+	 * @param $password - the password to set
+	 * @param $service - the name of the service, by default it equals the bundle id
+	 */
+	public function setPassword ($account, $password, $service = null)
+	{
+		if ( is_null( $service ) ):
+			$service = $this->bundle;
+		endif;
+
+        exec("security 2>&1 > add-generic-password -s $service -a $account -w $password", $output, $status);
+        //var_dump("security 2>&1 > /dev/null add-generic-password -s $service -a $account -w $password");exit;
+
+        // If the password is already set, we override it
+        if ( $status === 45 ):
+        	exec("security 2>&1 delete-generic-password -s $service -a $account");
+        	exec("security 2>&1 add-generic-password -s $service -a $account -w $password", $output, $status);
+        endif;
+
+        return ($status === 0);
+	}
+
 }

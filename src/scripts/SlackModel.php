@@ -125,10 +125,22 @@ class SlackModel {
     }
 
     public function getToken () {
-        return $this->workflows->read('token');
+        $token = $this->workflows->read('token');
+        if ($token === false) {
+            return $this->workflows->getPassword('token');
+        } else {
+            return $token;
+        }
     }
 
     public function setToken ($token) {
+        if ($this->workflows->setPassword('token', $token)) {
+            $this->workflows->delete('token');
+            $this->initCommander();
+        }
+    }
+
+    public function setTokenUnsafe ($token) {
         $this->workflows->write($token, 'token');
         $this->initCommander();
     }

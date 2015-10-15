@@ -3,7 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string></string>
+	<string>com.yannickglt.alfred2.slack</string>
+	<key>category</key>
+	<string>Productivity</string>
 	<key>connections</key>
 	<dict>
 		<key>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</key>
@@ -32,34 +34,13 @@
 	<key>createdby</key>
 	<string>Yannick Galatol</string>
 	<key>description</key>
-	<string></string>
+	<string>Interact with slack through Alfred</string>
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
 	<string>Slack</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>100</integer>
-				<key>script</key>
-				<string>$query = "{query}";
-$input = false;
-require_once 'scripts/slack.php';</string>
-				<key>type</key>
-				<integer>1</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -122,6 +103,27 @@ require_once 'scripts/slack.php';</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>100</integer>
+				<key>script</key>
+				<string>$query = "{query}";
+$input = false;
+require_once 'scripts/slack.php';</string>
+				<key>type</key>
+				<integer>1</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string></string>
@@ -144,6 +146,6 @@ require_once 'scripts/slack.php';</string>
 		</dict>
 	</dict>
 	<key>webaddress</key>
-	<string></string>
+	<string>https://github.com/yannickglt/alfred-slack</string>
 </dict>
 </plist>

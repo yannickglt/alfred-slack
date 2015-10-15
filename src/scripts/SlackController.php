@@ -70,8 +70,14 @@ class SlackController {
             [
                 'id' => 'token',
                 'title' => '--token',
-                'description' => 'Set the Slack token',
+                'description' => 'Set the Slack token in the keychain (recommended)',
                 'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ])
+            ],
+            [
+                'id' => 'token-unsafe',
+                'title' => '--token-unsafe',
+                'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
+                'data' => Utils::toObject([ 'type' => 'token-unsafe', 'token' => $param ])
             ],
             [
                 'id' => 'mark',
@@ -194,6 +200,11 @@ class SlackController {
 
     public function saveTokenAction ($token) {
         $this->model->setToken($token);
+        $this->notify('Token saved successfully');
+    }
+
+    public function saveTokenUnsafeAction ($token) {
+        $this->model->setTokenUnsafe($token);
         $this->notify('Token saved successfully');
     }
 
