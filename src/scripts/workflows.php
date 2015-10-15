@@ -536,8 +536,6 @@ class Workflows {
 		endif;
 
         $password = exec("security 2>&1 find-generic-password -s $service -a $account -w", $output, $status);
-        //var_dump($password);
-        //var_dump("security 2>&1 > /dev/null find-generic-password -s $service -a $account -w");exit;
         
         return ($status === 0) ? $password : null;
 	}
@@ -555,8 +553,7 @@ class Workflows {
 			$service = $this->bundle;
 		endif;
 
-        exec("security 2>&1 > add-generic-password -s $service -a $account -w $password", $output, $status);
-        //var_dump("security 2>&1 > /dev/null add-generic-password -s $service -a $account -w $password");exit;
+        exec("security 2>&1 add-generic-password -s $service -a $account -w $password", $output, $status);
 
         // If the password is already set, we override it
         if ( $status === 45 ):
