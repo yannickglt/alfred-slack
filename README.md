@@ -4,22 +4,27 @@ alfred-slack
 Open conversation with a contact in Slack
 
 # To start
-1. Generate a token at this address: `https://api.slack.com/`
-2. Launch the slack workflow with the parameter `--token` followed by the token.
+1. Download and install [Slack.alfredworkflow](https://github.com/packal/repository/raw/master/com.yannickglt.alfred2.slack/slack.alfredworkflow)
+2. Generate a token at this address: `https://api.slack.com/`
+3. Launch the slack workflow with the parameter `--token` followed by the token.
 
   Example: 
   ```
   slack --token xoxp-1234567890-1234567890-1234567890-ab1234
   ```
-3. Launch the cache refresh by taping the command `--refresh`.
+4. Launch the cache refresh by taping the command `--refresh`.
 
   Example:
   ```
   slack --refresh
   ```
-4. Enjoy!
+  **The cache refresh may take up to several minutes depending on your organization size.**
+  
+5. Enjoy!
 
-# To use
+  Note: install the [Packal Updater](http://www.packal.org/workflow/packal-updater) workflow if you want automatic updates.
+
+# How to use
 - List channels or groups to open in the Slack app:
 
 ```
