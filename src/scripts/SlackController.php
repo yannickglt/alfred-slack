@@ -25,7 +25,6 @@ class SlackController {
         $channels = $this->model->getChannels(true);
         foreach ($channels as $channel) {
             $results[] = [
-                'id' => $channel->id,
                 'title' => '#'.$channel->name,
                 'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
                 'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth, 'message' => $message ])
@@ -35,18 +34,16 @@ class SlackController {
         $groups = $this->model->getGroups(true);
         foreach ($groups as $group) {
             $results[] = [
-                'id' => $group->id,
                 'title' => '#'.$group->name,
                 'description' => 'Group - ' . count($group->members) . ' members',
                 'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth, 'message' => $message ])
             ];
         }
 
-        $users = $this->model->getUsers(true);
+        $users = $this->getUsers();
         foreach ($users as $user) {
             $icon = $this->model->getProfileIcon($user->id);
             $results[] = [
-                'id' => $user->id,
                 'title' => '@'.$user->name,
                 'description' => 'User - ' . $user->profile->real_name,
                 'icon' => $icon,
@@ -68,25 +65,21 @@ class SlackController {
         
         $results = [
             [
-                'id' => 'token',
                 'title' => '--token',
                 'description' => 'Set the Slack token in the keychain (recommended)',
                 'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ])
             ],
             [
-                'id' => 'token-unsafe',
                 'title' => '--token-unsafe',
                 'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
                 'data' => Utils::toObject([ 'type' => 'token-unsafe', 'token' => $param ])
             ],
             [
-                'id' => 'mark',
                 'title' => '--mark',
                 'description' => 'Mark all as read',
                 'data' => Utils::toObject([ 'type' => 'mark' ])
             ],
             [
-                'id' => 'refresh',
                 'title' => '--refresh',
                 'description' => 'Refresh the cache',
                 'data' => Utils::toObject([ 'type' => 'refresh' ])
@@ -125,7 +118,7 @@ class SlackController {
             ];
         }
 
-        $users = $this->model->getUsers(true);
+        $users = $this->getUsers();
         foreach ($users as $user) {
             $results[] = [
                 'id' => $user->id,
@@ -156,10 +149,9 @@ class SlackController {
             $date = new DateTime();
             $date->setTimestamp($message['ts']);
             $this->results[] = [
-                'id' => $message['ts'],
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
-                'icon' => ($results[0]['type'] === 'user') ? $this->model->getProfileIcon($message['user']) : null,
+                'icon' => $this->model->getProfileIcon($message['user']),
                 'data' => $results[0]['data']
             ];
         }
@@ -222,9 +214,10 @@ class SlackController {
             throw new Exception('Cannot use the method "render" if the method "notify" was called');
         }
 
+        $i = 0;
         foreach ($this->results as $result) {
             $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
-            $this->workflows->result($result['id'], json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['title'].' ');
+            $this->workflows->result($i++, json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['title'].' ');
         }
 
         $this->isRendered = true;
@@ -242,12 +235,26 @@ class SlackController {
         echo $message;
     }
 
+    private function getUsers ($excludeSlackBot = false) {
+        $users = $this->model->getUsers(true);
+        $auth = $this->model->getAuth();
+        if ($excludeSlackBot !== false) {
+            $users = Utils::filter($users, function ($user) use ($auth) {
+                return $user->id !== $auth->user_id;
+            });
+        } else {
+            $me = Utils::find($users, [ 'id' => $auth->user_id ]);
+            $me->name = $me->profile->real_name = 'slackbot';
+        }
+        return $users;
+    }
+
     private function filterResults ($array, $search) {
         $search = strtolower(trim($search));
         $found = [];
         $results = [];
-        foreach ($array as $element) {
-            $id = $element['id'];
+        foreach ($array as $id => $element) {
+            
             $title = strtolower(trim($element['title']));
             $description = strtolower(trim($element['description']));
 
