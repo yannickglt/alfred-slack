@@ -4,7 +4,7 @@ alfred-slack
 Open conversation with a contact in Slack
 
 # To start
-1. Generate a token at this address: `https://api.slack.com/`
+1. Generate a token at this address: `https://api.slack.com/web`
 2. Launch the slack workflow with the parameter `--token` followed by the token.
 
   Example: 
