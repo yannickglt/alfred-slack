@@ -20,7 +20,7 @@ Open conversation with a contact in Slack
 4. Enjoy!
 
 # To use
-- Open a channel or group room in the Slack app:
+- List channels or groups to open in the Slack app:
 
 ```
 slack <channel/group>
@@ -28,12 +28,19 @@ slack <channel/group>
 ![image](https://cloud.githubusercontent.com/assets/1006426/10527597/a4c81c44-7391-11e5-9009-625d1e6957f1.png)
 
 
-- Open a user room in the Slack app:
+- List users to open in the Slack app:
 
 ```
 slack <user>
 ```
 ![image](https://cloud.githubusercontent.com/assets/1006426/10527601/aa77ab3c-7391-11e5-9e04-1b937ef35206.png)
+
+- Open a channel, group or user in the Slack app:
+
+```
+slack <channel/group/user>
+```
+![image](http://www.packal.org/sites/default/files/public/workflow-files/comyannickgltalfred2slack/screenshots/alfred-slack2.gif)
 
 - List messages from a specific channel, group or user:
 
