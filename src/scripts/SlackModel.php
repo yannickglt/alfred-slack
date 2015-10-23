@@ -41,6 +41,19 @@ class SlackModel {
         return $icon;
     }
 
+    public function getFileIcon ($fileId) {
+        $icon = $this->workflows->readPath('file.image.'.$fileId);
+        if ($icon === false) {
+            $files = $this->getFiles();
+            $file = Utils::find($files, [ 'id' => $fileId ]);
+            if (!is_null($file) && !is_null($file->thumb_64)) {
+                $this->workflows->write(file_get_contents($file->thumb_64), 'file.image.'.$fileId);
+                $icon = $this->workflows->readPath('file.image.'.$fileId);
+            }
+        }
+        return $icon;
+    }
+
     public function getAuth () {
         $auth = $this->workflows->read('auth');
         if ($auth === false) {
@@ -112,6 +125,16 @@ class SlackModel {
         return $users;
     }
 
+    public function getFiles () {
+        $files = $this->workflows->read('files');
+        if ($files === false) {
+            $files = $this->commander->execute('files.list')->getBody()['files'];
+            $this->workflows->write($files, 'files');
+            $files = $this->workflows->read('files');
+        }
+        return $files;
+    }
+
     public function getImIdByUserId ($userId) {
         // Get the IM id if a user
         $ims = $this->getIms(true);
@@ -167,6 +190,7 @@ class SlackModel {
     }
 
     public function refreshCache () {
+        $this->setCacheLock(true);
 
         // Refresh auth
         $this->workflows->delete('auth');
@@ -190,9 +214,29 @@ class SlackModel {
         $this->workflows->delete('users');
         $this->getUsers();
         
+        // Refresh file icons
+        foreach ($this->getFiles() as $file) {
+            $this->workflows->delete('file.image.' . $file->id);
+            $this->getFileIcon($file->id);
+        }
+        
         // Refresh ims
         $this->workflows->delete('ims');
         $this->getIms();
+
+        $this->setCacheLock(false);
+    }
+
+    public function setCacheLock ($lock) {
+        if ($lock === true) {
+            $this->workflows->write('1', 'cache.lock');
+        } else {
+            $this->workflows->delete('cache.lock');
+        }
+    }
+
+    public function isCacheLocked () {
+        return ($this->workflows->read('cache.lock') === 1);
     }
 
     public function markAllAsRead () {

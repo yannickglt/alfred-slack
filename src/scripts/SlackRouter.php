@@ -1,8 +1,18 @@
 <?php
 
+require_once 'Utils.php';
+
 class SlackRouter {
 
 	private static $routingOrder = [
+		[
+			'name' => 'cacheLocked',
+			'type' => 'input'
+		],
+		[
+			'name' => 'getFiles',
+			'type' => 'input'
+		],
 		[
 			'name' => 'listConfigs',
 			'type' => 'input'
@@ -36,6 +46,10 @@ class SlackRouter {
 			'type' => 'output'
 		],
 		[
+			'name' => 'openFile',
+			'type' => 'output'
+		],
+		[
 			'name' => 'sendMessage',
 			'type' => 'output'
 		],
@@ -46,10 +60,11 @@ class SlackRouter {
 	];
 
 	public static function getAction ($input, $query) {
+		$router = new SlackRouter();
 		$type =	$input ? 'input' : 'output';
 		foreach (self::$routingOrder as $action) {
 			if ($action['type'] === $type) {
-				$res = self::{'check'.ucfirst($action['name'])}($query);
+				$res = $router->{'check'.ucfirst($action['name'])}($query);
 				if (!empty($res)) {
 					return (object) $res;
 				}
@@ -57,14 +72,26 @@ class SlackRouter {
 		}
 	}
 
-	private static function checkGetChannels ($channel) {
+	private function __construct () {
+
+	}
+
+	private function checkGetChannels ($channel) {
 		return [
 			'action' => 'getChannels',
 			'params' => [$channel]
 		];
 	}
 	
-	private static function checkGetChannelsWithMessage ($query) {
+	private function checkCacheLocked ($channel) {
+        if (Utils::getWorkflows()->readPath('cache.lock') !== false) {
+			return [
+				'action' => 'getCacheLockedMessage'
+			];
+        }
+	}
+	
+	private function checkGetChannelsWithMessage ($query) {
 		$firstSpace = strpos($query, ' ');
 		if (($firstSpace !== false) && ($firstSpace < strlen($query) - 1)) {
 			$channel = substr($query, 0, $firstSpace);
@@ -75,10 +102,9 @@ class SlackRouter {
 				'params' => [$channel, $message]
 			];
 		}
-		return false;
 	}
 	
-	private static function checkGetChannelHistory ($query) {
+	private function checkGetChannelHistory ($query) {
 		$firstSpace = strpos($query, ' ');
 		if (($firstSpace !== false) && ($firstSpace === strlen($query) - 1)) {
 			$channel = substr($query, 0, $firstSpace);
@@ -88,10 +114,21 @@ class SlackRouter {
 				'params' => [$channel]
 			];
 		}
-		return false;
+	}
+	
+	private function checkGetFiles ($query) {
+		$firstSpace = strpos($query, ' ');
+		if (substr($query, 0, $firstSpace) === '--files') {
+			$search = substr($query, $firstSpace + 1);
+
+			return [
+				'action' => 'getFiles',
+				'params' => [$search]
+			];
+		}
 	}
 
-	private static function checkListConfigs ($query) {
+	private function checkListConfigs ($query) {
 		$arr = explode(' ', $query);
 		$configAction = $arr[0];
 
@@ -101,10 +138,9 @@ class SlackRouter {
 				'params' => $arr
 			];
 		}
-		return false;
 	}
 
-	private static function checkOpenChannel ($query) {
+	private function checkOpenChannel ($query) {
 		$channelData = json_decode($query);
 
 		return [
@@ -113,7 +149,7 @@ class SlackRouter {
 		];
 	}
 
-	private static function checkSendMessage ($query) {
+	private function checkSendMessage ($query) {
 		$channelData = json_decode($query);
 
 	    if (!empty($channelData->message)) {
@@ -122,10 +158,9 @@ class SlackRouter {
 	    		'params' => [$channelData]
     		];
 	    }
-	    return false;
 	}
 
-	private static function checkSaveToken ($query) {
+	private function checkSaveToken ($query) {
 		$data = json_decode($query);
 
 		if ($data->type === 'token') {
@@ -134,11 +169,9 @@ class SlackRouter {
 				'params' => [$data->token]
 			];
 		}
-
-		return false;
 	}
 
-	private static function checkSaveTokenUnsafe ($query) {
+	private function checkSaveTokenUnsafe ($query) {
 		$data = json_decode($query);
 
 		if ($data->type === 'token-unsafe') {
@@ -147,11 +180,9 @@ class SlackRouter {
 				'params' => [$data->token]
 			];
 		}
-
-		return false;
 	}
 
-	private static function checkMarkAllAsRead ($query) {
+	private function checkMarkAllAsRead ($query) {
 		$data = json_decode($query);
 
 		if ($data->type === 'mark') {
@@ -159,11 +190,20 @@ class SlackRouter {
 				'action' => 'markAllAsRead'
 			];
 		}
-
-		return false;
 	}
 
-	private static function checkRefreshCache ($query) {
+	private function checkOpenFile ($query) {
+		$data = json_decode($query);
+
+		if ($data->type === 'file') {
+			return [
+				'action' => 'openFile',
+				'params' => [$data]
+			];
+		}
+	}
+
+	private function checkRefreshCache ($query) {
 		$data = json_decode($query);
 
 		if ($data->type === 'refresh') {
@@ -171,8 +211,6 @@ class SlackRouter {
 				'action' => 'refreshCache'
 			];
 		}
-
-		return false;
 	}
 
 }

@@ -27,7 +27,8 @@ class SlackController {
             $results[] = [
                 'title' => '#'.$channel->name,
                 'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
-                'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth, 'message' => $message ])
+                'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth, 'message' => $message ]),
+                'autocomplete' => '#'.$channel->name.' '
             ];
         }
 
@@ -36,7 +37,8 @@ class SlackController {
             $results[] = [
                 'title' => '#'.$group->name,
                 'description' => 'Group - ' . count($group->members) . ' members',
-                'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth, 'message' => $message ])
+                'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth, 'message' => $message ]),
+                'autocomplete' => '#'.$group->name.' '
             ];
         }
 
@@ -47,14 +49,15 @@ class SlackController {
                 'title' => '@'.$user->name,
                 'description' => 'User - ' . $user->profile->real_name,
                 'icon' => $icon,
-                'data' => Utils::extend($user, [ 'type' => 'user', 'auth' => $auth, 'message' => $message ])
+                'data' => Utils::extend($user, [ 'type' => 'user', 'auth' => $auth, 'message' => $message ]),
+                'autocomplete' => '@'.$user->name.' '
             ];
         }
 
         $this->results = $this->filterResults($results, $search);
         if (!is_null($message)) {
             $firstResult = $this->results[0];
-            $firstResult['title'] = 'Sends "'.$message.'" to ' . $firstResult['title'];
+            $firstResult['title'] = 'Send "'.$message.'" to ' . $firstResult['title'];
             $this->results = [$firstResult];
         }
 
@@ -67,22 +70,32 @@ class SlackController {
             [
                 'title' => '--token',
                 'description' => 'Set the Slack token in the keychain (recommended)',
-                'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ])
+                'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ]),
+                'autocomplete' => '--token '
             ],
             [
                 'title' => '--token-unsafe',
                 'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
-                'data' => Utils::toObject([ 'type' => 'token-unsafe', 'token' => $param ])
+                'data' => Utils::toObject([ 'type' => 'token-unsafe', 'token' => $param ]),
+                'autocomplete' => '--token-unsage '
             ],
             [
                 'title' => '--mark',
                 'description' => 'Mark all as read',
-                'data' => Utils::toObject([ 'type' => 'mark' ])
+                'data' => Utils::toObject([ 'type' => 'mark' ]),
+                'autocomplete' => '--mark '
+            ],
+            [
+                'title' => '--files',
+                'description' => 'Search files within the team',
+                'data' => Utils::toObject([ 'type' => 'files' ]),
+                'autocomplete' => '--files '
             ],
             [
                 'title' => '--refresh',
                 'description' => 'Refresh the cache',
-                'data' => Utils::toObject([ 'type' => 'refresh' ])
+                'data' => Utils::toObject([ 'type' => 'refresh' ]),
+                'autocomplete' => '--refresh '
             ]
         ];
 
@@ -133,15 +146,16 @@ class SlackController {
 
         $history = [];
         $icon = null;
-        switch($results[0]['type']) {
+        $firstResult = $results[0];
+        switch($firstResult['type']) {
             case 'channel':
-                $history = $this->model->getChannelHistory($results[0]['id']);
+                $history = $this->model->getChannelHistory($firstResult['id']);
                 break;
             case 'group':
-                $history = $this->model->getGroupHistory($results[0]['id']);
+                $history = $this->model->getGroupHistory($firstResult['id']);
                 break;
             case 'user':
-                $history = $this->model->getImHistory($this->model->getImIdByUserId($results[0]['id']));
+                $history = $this->model->getImHistory($this->model->getImIdByUserId($firstResult['id']));
                 break;
         }
 
@@ -152,10 +166,47 @@ class SlackController {
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
                 'icon' => $this->model->getProfileIcon($message['user']),
-                'data' => $results[0]['data']
+                'data' => $firstResult['data'],
+                'autocomplete' => $firstResult['title'].' '
             ];
         }
         
+        $this->render();
+    }
+
+    public function getFilesAction ($search) {
+        $files = $this->model->getFiles();
+
+        $results = [];
+        foreach ($files as $file) {
+            $icon = !is_null($file->thumb_64) ? $this->model->getFileIcon($file->id) : null;
+            $results[] = [
+                'id' => $file->id,
+                'title' => $file->name,
+                'description' => $file->title,
+                'icon' => $icon,
+                'data' => Utils::extend($file, [ 'type' => 'file' ])
+            ];
+        }
+
+        if (empty($search)) {
+            $this->results = $results;
+        } else {
+            $this->results = $this->filterResults($results, $search);
+        }
+        
+        $this->render();
+    }
+
+    public function getCacheLockedMessageAction () {
+        $this->results = [
+            [
+                'id' => '',
+                'title' => 'Refresh still in progress',
+                'description' => 'Please wait the end of cache refresh...'
+            ]
+        ];
+
         $this->render();
     }
 
@@ -170,6 +221,10 @@ class SlackController {
 
         $url = 'slack://channel?id='.$id.'&team='.$data->auth->team_id;
         Utils::openUrl($url);
+    }
+
+    public function openFileAction ($file) {
+        Utils::openUrl($file->permalink);
     }
 
     public function sendMessageAction ($data) {
@@ -217,7 +272,7 @@ class SlackController {
         $i = 0;
         foreach ($this->results as $result) {
             $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
-            $this->workflows->result($i++, json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['title'].' ');
+            $this->workflows->result($i++, json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['autocomplete']);
         }
 
         $this->isRendered = true;
