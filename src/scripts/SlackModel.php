@@ -46,6 +46,9 @@ class SlackModel {
         if ($icon === false) {
             $files = $this->getFiles();
             $file = Utils::find($files, [ 'id' => $fileId ]);
+            if (is_null($file)) {
+                $file = $this->getFile($fileId);
+            }
             if (!is_null($file) && !is_null($file->thumb_64)) {
                 $this->workflows->write(file_get_contents($file->thumb_64), 'file.image.'.$fileId);
                 $icon = $this->workflows->readPath('file.image.'.$fileId);
@@ -134,6 +137,24 @@ class SlackModel {
         }
         return $files;
     }
+    
+    public function getFile ($fileId) {
+        return (object) $this->commander->execute('files.info', [ 'file' => $fileId ])->getBody()['file'];
+    }
+
+    public function getStarredItems () {
+        $stars = $this->workflows->read('stars');
+        if ($stars === false) {
+            $stars = $this->commander->execute('stars.list')->getBody()['items'];
+            $this->workflows->write($stars, 'stars');
+            $stars = $this->workflows->read('stars');
+        }
+        return $stars;
+    }
+
+    public function search ($query) {
+        return $this->commander->execute('search.all', [ 'query' => $query ])->getBody();
+    }
 
     public function getImIdByUserId ($userId) {
         // Get the IM id if a user
@@ -166,6 +187,10 @@ class SlackModel {
     public function setTokenUnsafe ($token) {
         $this->workflows->write($token, 'token');
         $this->initCommander();
+    }
+
+    public function setPresence ($isAway = false) {
+        return $this->commander->execute('users.setPresence', [ 'presence' => $isAway ? 'away' : 'auto' ])->getBody();
     }
 
     public function postMessage ($channel, $message, $asBot = false) {
@@ -239,35 +264,40 @@ class SlackModel {
         return ($this->workflows->read('cache.lock') === 1);
     }
 
+    public function markChannelAsRead ($channelId) {
+        $now = time();
+        $this->commander->executeAsync('channels.mark', [ 'channel' => $channelId, 'ts' => $now ]);
+    }
+
+    public function markGroupAsRead ($groupId) {
+        $now = time();
+        $this->commander->executeAsync('groups.mark', [ 'channel' => $groupId, 'ts' => $now ]);
+    }
+
+    public function markImAsRead ($imId) {
+        $now = time();
+        $this->commander->executeAsync('im.mark', [ 'channel' => $imId, 'ts' => $now ]);
+    }
+
     public function markAllAsRead () {
         $now = time();
-        $responses = [];
-
-        function getBody ($e) {
-            return $e->getBody();
-        }
-
-        $channelParams = [];
+        $requests = [];
+        
         $channels = $this->getChannels();
         foreach ($channels as $channel) {
-            $channelParams[] = [ 'command' => 'channels.mark', 'parameters' => [ 'channel' => $channel->id, 'ts' => $now ] ];
+            $requests[] = [ 'command' => 'channels.mark', 'parameters' => [ 'channel' => $channel->id, 'ts' => $now ] ];
         }
-        $responses['channels'] = array_map('getBody', $this->commander->executeAll($channelParams));
 
-        $groupParams = [];
         $groups = $this->getGroups();
         foreach ($groups as $group) {
-            $groupParams[] = [ 'command' => 'groups.mark', 'parameters' => [ 'channel' => $group->id, 'ts' => $now ] ];
+            $requests[] = [ 'command' => 'groups.mark', 'parameters' => [ 'channel' => $group->id, 'ts' => $now ] ];
         }
-        $responses['groups'] = array_map('getBody', $this->commander->executeAll($groupParams));
 
-        $imParams = [];
         $ims = $this->getIms();
         foreach ($ims as $im) {
-            $imParams[] = [ 'command' => 'im.mark', 'parameters' => [ 'channel' => $im->id, 'ts' => $now ] ];
+            $requests[] = [ 'command' => 'im.mark', 'parameters' => [ 'channel' => $im->id, 'ts' => $now ] ];
         }
-        $responses['ims'] = array_map('getBody', $this->commander->executeAll($imParams));
 
-        return $responses;
+        return array_map(function ($e) { return $e->getBody(); }, $this->commander->executeAll($requests));
     }
 }

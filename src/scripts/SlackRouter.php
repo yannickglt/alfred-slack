@@ -14,6 +14,18 @@ class SlackRouter {
 			'type' => 'input'
 		],
 		[
+			'name' => 'getStarredItems',
+			'type' => 'input'
+		],
+		[
+			'name' => 'search',
+			'type' => 'input'
+		],
+		[
+			'name' => 'listPresences',
+			'type' => 'input'
+		],
+		[
 			'name' => 'listConfigs',
 			'type' => 'input'
 		],
@@ -31,6 +43,10 @@ class SlackRouter {
 		],
 		[
 			'name' => 'saveTokenUnsafe',
+			'type' => 'output'
+		],
+		[
+			'name' => 'setPresence',
 			'type' => 'output'
 		],
 		[
@@ -127,6 +143,30 @@ class SlackRouter {
 			];
 		}
 	}
+	
+	private function checkGetStarredItems ($query) {
+		$firstSpace = strpos($query, ' ');
+		if (substr($query, 0, $firstSpace) === '--stars') {
+			$search = substr($query, $firstSpace + 1);
+
+			return [
+				'action' => 'getStarredItems',
+				'params' => [$search]
+			];
+		}
+	}
+	
+	private function checkSearch ($query) {
+		$firstSpace = strpos($query, ' ');
+		if (substr($query, 0, $firstSpace) === '--search') {
+			$search = substr($query, $firstSpace + 1);
+
+			return [
+				'action' => 'search',
+				'params' => [$search]
+			];
+		}
+	}
 
 	private function checkListConfigs ($query) {
 		$arr = explode(' ', $query);
@@ -136,6 +176,18 @@ class SlackRouter {
 			return [
 				'action' => 'listConfigs',
 				'params' => $arr
+			];
+		}
+	}
+
+	private function checkListPresences ($query) {
+		$arr = explode(' ', $query);
+		$configAction = $arr[0];
+
+		if (strpos($configAction, '--presence') === 0) {
+			return [
+				'action' => 'listPresences',
+				'params' => array_slice($arr, 1)
 			];
 		}
 	}
@@ -178,6 +230,17 @@ class SlackRouter {
 			return [
 				'action' => 'saveTokenUnsafe',
 				'params' => [$data->token]
+			];
+		}
+	}
+
+	private function checkSetPresence ($query) {
+		$data = json_decode($query);
+
+		if ($data->type === 'presence') {
+			return [
+				'action' => 'setPresence',
+				'params' => [$data->presence]
 			];
 		}
 	}

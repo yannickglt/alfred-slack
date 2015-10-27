@@ -88,7 +88,7 @@
 $input = true;
 require_once 'scripts/slack.php';</string>
 				<key>subtext</key>
-				<string>Open in Slack</string>
+				<string>Slack workflow</string>
 				<key>title</key>
 				<string>Slack</string>
 				<key>type</key>

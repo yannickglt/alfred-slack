@@ -51,4 +51,45 @@ class CustomCommander extends \Frlnc\Slack\Core\Commander {
         return $this->interactor->getAll($requests);
     }
 
+    /**
+     * Executes a command.
+     *
+     * @param  string $command
+     * @param  array $parameters
+     * @return \Frlnc\Slack\Contracts\Http\Response
+     */
+    public function executeAsync($command, array $parameters = [])
+    {
+        if (!isset(self::$commands[$command])) {
+            throw new InvalidArgumentException("The command '{$command}' is not currently supported");
+        }
+
+        $command = self::$commands[$command];
+
+        if ($command['token']) {
+            $parameters = array_merge($parameters, ['token' => $this->token]);
+        }
+
+        if (isset($command['format'])) {
+            foreach ($command['format'] as $format) {
+                if (isset($parameters[$format])) {
+                    $parameters[$format] = self::format($parameters[$format]);
+                }
+            }
+        }
+
+        $headers = [];
+        if (isset($command['headers'])) {
+            $headers = $command['headers'];
+        }
+
+        $url = self::$baseUrl . $command['endpoint'];
+
+        if (isset($command['post']) && $command['post']) {
+            $this->interactor->postAsync($url, [], $parameters, $headers);
+        } else {
+            $this->interactor->getAsync($url, $parameters, $headers);
+        }
+    }
+
 }

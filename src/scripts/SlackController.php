@@ -58,6 +58,7 @@ class SlackController {
         if (!is_null($message)) {
             $firstResult = $this->results[0];
             $firstResult['title'] = 'Send "'.$message.'" to ' . $firstResult['title'];
+            $firstResult['autocomplete'] .= $message;
             $this->results = [$firstResult];
         }
 
@@ -87,9 +88,27 @@ class SlackController {
             ],
             [
                 'title' => '--files',
-                'description' => 'Search files within the team',
+                'description' => 'List the files within the team',
                 'data' => Utils::toObject([ 'type' => 'files' ]),
                 'autocomplete' => '--files '
+            ],
+            [
+                'title' => '--search',
+                'description' => 'Search both messages and files',
+                'data' => Utils::toObject([ 'type' => 'search' ]),
+                'autocomplete' => '--search '
+            ],
+            [
+                'title' => '--stars',
+                'description' => 'List the items starred',
+                'data' => Utils::toObject([ 'type' => 'stars' ]),
+                'autocomplete' => '--stars '
+            ],
+            [
+                'title' => '--presence',
+                'description' => 'Set the user presence (either active or away)',
+                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => $param ]),
+                'autocomplete' => '--presence '
             ],
             [
                 'title' => '--refresh',
@@ -100,6 +119,31 @@ class SlackController {
         ];
 
         $this->results = $this->filterResults($results, $action);
+        $this->render();
+    }
+
+    public function listPresencesAction ($presence) {
+        
+        $results = [
+            [
+                'title' => '--presence away',
+                'description' => 'Set the presence as away',
+                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => 'away' ]),
+                'autocomplete' => '--presence away '
+            ],
+            [
+                'title' => '--presence active',
+                'description' => 'Set the presence as active',
+                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => 'active' ]),
+                'autocomplete' => '--presence active '
+            ],
+        ];
+
+        if (empty($presence)) {
+            $this->results = $results;
+        } else {
+            $this->results = $this->filterResults($results, $presence);
+        }
         $this->render();
     }
 
@@ -150,12 +194,16 @@ class SlackController {
         switch($firstResult['type']) {
             case 'channel':
                 $history = $this->model->getChannelHistory($firstResult['id']);
+                $this->model->markChannelAsRead($firstResult['id']);
                 break;
             case 'group':
                 $history = $this->model->getGroupHistory($firstResult['id']);
+                $this->model->markGroupAsRead($firstResult['id']);
                 break;
             case 'user':
-                $history = $this->model->getImHistory($this->model->getImIdByUserId($firstResult['id']));
+                $imId = $this->model->getImIdByUserId($firstResult['id']);
+                $history = $this->model->getImHistory($imId);
+                $this->model->markImAsRead($imId);
                 break;
         }
 
@@ -170,7 +218,7 @@ class SlackController {
                 'autocomplete' => $firstResult['title'].' '
             ];
         }
-        
+
         $this->render();
     }
 
@@ -185,7 +233,8 @@ class SlackController {
                 'title' => $file->name,
                 'description' => $file->title,
                 'icon' => $icon,
-                'data' => Utils::extend($file, [ 'type' => 'file' ])
+                'data' => Utils::extend($file, [ 'type' => 'file' ]),
+                'autocomplete' => '--files ' . $file->name
             ];
         }
 
@@ -194,6 +243,76 @@ class SlackController {
         } else {
             $this->results = $this->filterResults($results, $search);
         }
+        
+        $this->render();
+    }
+
+    public function getStarredItemsAction ($search) {
+        $items = $this->model->getStarredItems();
+
+        $results = [];
+        foreach ($items as $item) {
+            switch ($item->type) {
+                case 'message':
+                    $date = new DateTime();
+                    $date->setTimestamp($item->message->ts);
+                    $results[] = [
+                        'title' => $item->message->text,
+                        'description' => $date->format('F jS - H:i'),
+                        'icon' => $this->model->getProfileIcon($item->message->user),
+                        'data' => Utils::extend($item->message, [ 'type' => 'file' ]),
+                        'autocomplete' => '--stars ' . $item->message->text
+                    ];
+                    break;
+                case 'file':
+                    $icon = !is_null($item->file->thumb_64) ? $this->model->getFileIcon($item->file->id) : null;
+                    $results[] = [
+                        'id' => $item->file->id,
+                        'title' => $item->file->name,
+                        'description' => $item->file->title,
+                        'icon' => $icon,
+                        'data' => Utils::extend($item->file, [ 'type' => 'file' ]),
+                        'autocomplete' => '--stars ' . $item->file->name
+                    ];
+                    break;
+            }
+        }
+
+        if (empty($search)) {
+            $this->results = $results;
+        } else {
+            $this->results = $this->filterResults($results, $search);
+        }
+        
+        $this->render();
+    }
+
+    public function searchAction ($query) {
+        $searchResults = $this->model->search($query);
+
+        $results = [];
+        foreach ($searchResults['messages']['matches'] as $message) {
+            $date = new DateTime();
+            $date->setTimestamp($message['ts']);
+            $results[] = [
+                'title' => $message['text'],
+                'description' => $date->format('F jS - H:i'),
+                'icon' => $this->model->getProfileIcon($message['user']),
+                'data' => Utils::extend($message, [ 'type' => 'file' ])
+            ];
+        }
+        foreach ($searchResults['files']['matches'] as $file) {
+            $icon = !is_null($file->thumb_64) ? $this->model->getFileIcon($file->id) : null;
+            $results[] = [
+                'id' => $file->id,
+                'title' => $file->name,
+                'description' => $file->title,
+                'icon' => $icon,
+                'data' => Utils::extend($file, [ 'type' => 'file' ])
+            ];
+        }
+
+        $this->results = $results;
         
         $this->render();
     }
@@ -253,6 +372,12 @@ class SlackController {
     public function saveTokenUnsafeAction ($token) {
         $this->model->setTokenUnsafe($token);
         $this->notify('Token saved successfully');
+    }
+
+    public function setPresenceAction ($presence) {
+        $isAway = (strtolower($presence) === 'away');
+        $this->model->setPresence($isAway);
+        $this->notify('Presence set as "' . ($isAway ? 'away' : 'active') . '" successfully');
     }
 
     public function refreshCacheAction () {

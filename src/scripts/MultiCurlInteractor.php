@@ -11,7 +11,29 @@ class MultiCurlInteractor extends \Frlnc\Slack\Http\CurlInteractor {
     public function getAll($urlsWithParameters)
     {
         $requests = $this->prepareRequests($urlsWithParameters);
-        return $this->executeMultiRequest($requests['multiRequest'], $requests['singleRequests']);
+        $this->executeMultiRequest($requests['multiRequest'], $requests['singleRequests']);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAsync($url, array $parameters = [], array $headers = [])
+    {
+        $request = $this->prepareAsyncRequest($url, $parameters, $headers);
+        $this->executeAsyncRequest($request);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function postAsync($url, array $urlParameters = [], array $postParameters = [], array $headers = [])
+    {
+        $request = $this->prepareAsyncRequest($url, $urlParameters, $headers);
+
+        curl_setopt($request, CURLOPT_POST, count($postParameters));
+        curl_setopt($request, CURLOPT_POSTFIELDS, http_build_query($postParameters));
+        
+        $this->executeAsyncRequest($request);
     }
 
     /**
@@ -95,4 +117,48 @@ class MultiCurlInteractor extends \Frlnc\Slack\Http\CurlInteractor {
         return $responses;
     }
 
+    /**
+     * Prepares a request using curl.
+     *
+     * @param  string $url        [description]
+     * @param  array  $parameters [description]
+     * @param  array  $headers    [description]
+     * @return resource
+     */
+    protected static function prepareAsyncRequest($url, $parameters = [], $headers = [])
+    {
+        $multiRequest = curl_multi_init();
+        $singleRequest = curl_init();
+
+        if ($query = http_build_query($parameters)) {
+            $url .= '?' . $query;
+        }
+        curl_setopt($singleRequest, CURLOPT_URL, $url);
+        curl_setopt($singleRequest, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($singleRequest, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($singleRequest, CURLINFO_HEADER_OUT, true);
+        curl_setopt($singleRequest, CURLOPT_SSL_VERIFYPEER, false);
+
+        curl_multi_add_handle($multiRequest, $singleRequest);
+
+        return $multiRequest;
+    }
+
+    /**
+     * Executes a curl request.
+     *
+     * @param  resource $request
+     * @return \Frlnc\Slack\Contracts\Http\Response
+     */
+    public function executeAsyncRequest($request)
+    {
+        $active = null;
+        do {
+            //ob_start();
+            $status = curl_multi_exec($request, $active);
+            //ob_end_clean();
+        } while ($status === CURLM_CALL_MULTI_PERFORM || $active);
+
+        curl_multi_close($request);
+    }
 }
