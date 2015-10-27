@@ -194,7 +194,15 @@ class SlackModel {
     }
 
     public function postMessage ($channel, $message, $asBot = false) {
-        return $this->commander->execute('chat.postMessage', [ 'channel' => $channel, 'text' => $message, 'as_user' => !$asBot ])->getBody();
+        return $this->commander->execute('chat.postMessage', [
+            'channel' => $channel,
+            'text' => $message,
+            'as_user' => !$asBot,
+            'parse' => 'none',
+            'link_names' => 1,
+            'unfurl_links' => true,
+            'unfurl_media' => true
+        ])->getBody();
     }
 
     public function getChannelHistory ($channelId) {

@@ -377,7 +377,7 @@ class SlackController {
     public function setPresenceAction ($presence) {
         $isAway = (strtolower($presence) === 'away');
         $this->model->setPresence($isAway);
-        $this->notify('Presence set as "' . ($isAway ? 'away' : 'active') . '" successfully');
+        $this->notify('You are now marked as ​"' . ($isAway ? 'away' : 'active') . '"');
     }
 
     public function refreshCacheAction () {
