@@ -60,3 +60,33 @@ slack <channel/group/user>
 slack <channel/group/user> <message>
 ```
 ![image](https://cloud.githubusercontent.com/assets/1006426/10527561/6966d26c-7391-11e5-8907-ee2999e3ef36.png)
+
+- Mark all channels as read
+
+```
+slack --mark
+```
+
+- List the files within the team
+
+```
+slack --files <search>
+```
+
+- List the items starred
+
+```
+slack --stars <search>
+```
+
+- Search both messages and files
+
+```
+slack --search <query>
+```
+
+- Set the user presence (either active or away)
+
+```
+slack --presence <active|away>
+```
