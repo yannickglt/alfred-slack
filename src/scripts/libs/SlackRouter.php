@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Utils.php';
+namespace AlfredSlack\Libs;
 
 class SlackRouter {
 

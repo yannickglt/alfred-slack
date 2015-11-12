@@ -9,5 +9,17 @@
             "name": "Yannick Galatol",
             "email": "yannick.galatol@gmail.com"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "AlfredSlack\\Config\\": ["config/"],
+            "AlfredSlack\\Controllers\\": ["controllers/"],
+            "AlfredSlack\\Helpers\\": ["helpers/"],
+            "AlfredSlack\\Helpers\\Core\\": ["helpers/core/"],
+            "AlfredSlack\\Helpers\\Http\\": ["helpers/http/"],
+            "AlfredSlack\\Helpers\\Service\\": ["helpers/service/"],
+            "AlfredSlack\\Libs\\": ["libs/"],
+            "AlfredSlack\\Models\\": ["models/"]
+        }
+    }
 }

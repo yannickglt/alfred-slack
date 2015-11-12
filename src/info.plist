@@ -86,7 +86,7 @@
 				<key>script</key>
 				<string>$query = "{query}";
 $input = true;
-require_once 'scripts/slack.php';</string>
+require_once 'scripts/index.php';</string>
 				<key>subtext</key>
 				<string>Slack workflow</string>
 				<key>title</key>
@@ -113,7 +113,7 @@ require_once 'scripts/slack.php';</string>
 				<key>script</key>
 				<string>$query = "{query}";
 $input = false;
-require_once 'scripts/slack.php';</string>
+require_once 'scripts/index.php';</string>
 				<key>type</key>
 				<integer>1</integer>
 			</dict>

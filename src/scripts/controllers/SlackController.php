@@ -1,56 +1,57 @@
 <?php
 
-require_once 'Utils.php';
-require_once 'SlackModel.php';
+namespace AlfredSlack\Controllers;
+
+use AlfredSlack\Libs\Utils;
+use AlfredSlack\Helpers\Service\MultiTeamSlackService;
 
 class SlackController {
 
-    private $model;
+    private $service;
     private $workflows;
     private $results;
     private $isRendered = false;
     private $isNotified = false;
     
     public function __construct () {
+        Utils::defineTimeZone();
         $this->workflows = Utils::getWorkflows();
-        $this->model = new SlackModel();
+        $this->service = new MultiTeamSlackService();
         $this->results = [];
     }
 
     public function getChannelsAction ($search, $message = null) {
         $results = [];
 
-        $auth = $this->model->getAuth();
-
-        $channels = $this->model->getChannels(true);
+        $channels = $this->service->getChannels(true);
         foreach ($channels as $channel) {
             $results[] = [
-                'title' => '#'.$channel->name,
-                'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
-                'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth, 'message' => $message ]),
-                'autocomplete' => '#'.$channel->name.' '
+                'title' => '#'.$channel->getName(),
+                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'data' => Utils::extend($channel, [ 'type' => 'channel', 'message' => $message ]),
+                'autocomplete' => '#'.$channel->getName().' '
             ];
         }
 
-        $groups = $this->model->getGroups(true);
+        $groups = $this->service->getGroups(true);
         foreach ($groups as $group) {
             $results[] = [
-                'title' => '#'.$group->name,
-                'description' => 'Group - ' . count($group->members) . ' members',
-                'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth, 'message' => $message ]),
-                'autocomplete' => '#'.$group->name.' '
+                'title' => '#'.$group->getName(),
+                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'data' => Utils::extend($group, [ 'type' => 'group', 'message' => $message ]),
+                'autocomplete' => '#'.$group->getName().' '
             ];
         }
 
         $users = $this->getUsers();
         foreach ($users as $user) {
-            $icon = $this->model->getProfileIcon($user->id);
+            $icon = $this->service->getProfileIcon($user);
             $results[] = [
-                'title' => '@'.$user->name,
-                'description' => 'User - ' . $user->profile->real_name,
+                'title' => '@'.$user->getName(),
+                'description' => 'User - ' . $user->getProfile()->real_name,
                 'icon' => $icon,
-                'data' => Utils::extend($user, [ 'type' => 'user', 'auth' => $auth, 'message' => $message ]),
-                'autocomplete' => '@'.$user->name.' '
+                'data' => Utils::extend($user, [ 'type' => 'user', 'message' => $message ]),
+                'autocomplete' => '@'.$user->getName().' '
             ];
         }
 
@@ -151,27 +152,25 @@ class SlackController {
 
         $results = [];
 
-        $auth = $this->model->getAuth();
-
-        $channels = $this->model->getChannels(true);
+        $channels = $this->service->getChannels(true);
         foreach ($channels as $channel) {
             $results[] = [
                 'id' => $channel->id,
                 'title' => '#'.$channel->name,
                 'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
                 'type' => 'channel',
-                'data' => Utils::extend($channel, [ 'type' => 'channel', 'auth' => $auth ])
+                'data' => Utils::extend($channel, [ 'type' => 'channel' ])
             ];
         }
 
-        $groups = $this->model->getGroups(true);
+        $groups = $this->service->getGroups(true);
         foreach ($groups as $group) {
             $results[] = [
                 'id' => $group->id,
                 'title' => '#'.$group->name,
                 'description' => 'Group - ' . count($group->members) . ' members',
                 'type' => 'group',
-                'data' => Utils::extend($group, [ 'type' => 'group', 'auth' => $auth ])
+                'data' => Utils::extend($group, [ 'type' => 'group' ])
             ];
         }
 
@@ -182,28 +181,33 @@ class SlackController {
                 'title' => '@'.$user->name,
                 'description' => 'User - ' . $user->profile->real_name,
                 'type' => 'user',
-                'data' => Utils::extend($user, [ 'type' => 'user', 'auth' => $auth ])
+                'data' => Utils::extend($user, [ 'type' => 'user' ])
             ];
         }
 
         $results = $this->filterResults($results, $search);
 
+        if (count($results) === 0) {
+            return;
+        }
+
         $history = [];
         $icon = null;
         $firstResult = $results[0];
+        $teamId = $firstResult['data']->auth->team_id;
         switch($firstResult['type']) {
             case 'channel':
-                $history = $this->model->getChannelHistory($firstResult['id']);
-                $this->model->markChannelAsRead($firstResult['id']);
+                $history = $this->service->getChannelHistory($teamId, $firstResult['id']);
+                $this->service->markChannelAsRead($teamId, $firstResult['id']);
                 break;
             case 'group':
-                $history = $this->model->getGroupHistory($firstResult['id']);
-                $this->model->markGroupAsRead($firstResult['id']);
+                $history = $this->service->getGroupHistory($teamId, $firstResult['id']);
+                $this->service->markGroupAsRead($teamId, $firstResult['id']);
                 break;
             case 'user':
-                $imId = $this->model->getImIdByUserId($firstResult['id']);
-                $history = $this->model->getImHistory($imId);
-                $this->model->markImAsRead($imId);
+                $imId = $this->service->getImIdByUserId($teamId, $firstResult['id']);
+                $history = $this->service->getImHistory($teamId, $imId);
+                $this->service->markImAsRead($imId);
                 break;
         }
 
@@ -213,7 +217,7 @@ class SlackController {
             $this->results[] = [
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $this->model->getProfileIcon($message['user']),
+                'icon' => $this->service->getProfileIcon($message['user']),
                 'data' => $firstResult['data'],
                 'autocomplete' => $firstResult['title'].' '
             ];
@@ -223,11 +227,11 @@ class SlackController {
     }
 
     public function getFilesAction ($search) {
-        $files = $this->model->getFiles();
+        $files = $this->service->getFiles();
 
         $results = [];
         foreach ($files as $file) {
-            $icon = !is_null($file->thumb_64) ? $this->model->getFileIcon($file->id) : null;
+            $icon = !is_null($file->thumb_64) ? $this->service->getFileIcon($file->id) : null;
             $results[] = [
                 'id' => $file->id,
                 'title' => $file->name,
@@ -248,7 +252,7 @@ class SlackController {
     }
 
     public function getStarredItemsAction ($search) {
-        $items = $this->model->getStarredItems();
+        $items = $this->service->getStarredItems();
 
         $results = [];
         foreach ($items as $item) {
@@ -259,13 +263,13 @@ class SlackController {
                     $results[] = [
                         'title' => $item->message->text,
                         'description' => $date->format('F jS - H:i'),
-                        'icon' => $this->model->getProfileIcon($item->message->user),
+                        'icon' => $this->service->getProfileIcon($item->message->user),
                         'data' => Utils::extend($item->message, [ 'type' => 'file' ]),
                         'autocomplete' => '--stars ' . $item->message->text
                     ];
                     break;
                 case 'file':
-                    $icon = !is_null($item->file->thumb_64) ? $this->model->getFileIcon($item->file->id) : null;
+                    $icon = !is_null($item->file->thumb_64) ? $this->service->getFileIcon($item->file->id) : null;
                     $results[] = [
                         'id' => $item->file->id,
                         'title' => $item->file->name,
@@ -288,21 +292,21 @@ class SlackController {
     }
 
     public function searchAction ($query) {
-        $searchResults = $this->model->search($query);
+        $searchResults = $this->service->search($query);
 
         $results = [];
-        foreach ($searchResults['messages']['matches'] as $message) {
+        foreach ($searchResults['messages'] as $message) {
             $date = new DateTime();
             $date->setTimestamp($message['ts']);
             $results[] = [
                 'title' => $message['text'],
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $this->model->getProfileIcon($message['user']),
+                'icon' => $this->service->getProfileIcon($message['user']),
                 'data' => Utils::extend($message, [ 'type' => 'file' ])
             ];
         }
-        foreach ($searchResults['files']['matches'] as $file) {
-            $icon = !is_null($file->thumb_64) ? $this->model->getFileIcon($file->id) : null;
+        foreach ($searchResults['files'] as $file) {
+            $icon = !is_null($file->thumb_64) ? $this->service->getFileIcon($file->id) : null;
             $results[] = [
                 'id' => $file->id,
                 'title' => $file->name,
@@ -335,7 +339,7 @@ class SlackController {
 
         // Get the IM id if a user
         if ($data->type === 'user') {
-            $id = $this->model->getImIdByUserId($data->id);
+            $id = $this->service->getImIdByUserId($data->id);
         }
 
         $url = 'slack://channel?id='.$id.'&team='.$data->auth->team_id;
@@ -354,40 +358,40 @@ class SlackController {
 
         // Get the IM id if a user
         if ($data->type === 'user') {
-            $id = $this->model->getImIdByUserId($data->id);
+            $id = $this->service->getImIdByUserId($data->id);
             $title = '@' . $title;
         } else {
             $title = '#' . $title;
         }
 
-        $this->model->postMessage($id, $data->message);
+        $this->service->postMessage($id, $data->message);
 
         $this->notify('Message sent successfully to ' . $title);
     }
 
     public function saveTokenAction ($token) {
-        $this->model->setToken($token);
+        $this->service->addToken($token);
         $this->notify('Token saved successfully');
     }
 
     public function saveTokenUnsafeAction ($token) {
-        $this->model->setTokenUnsafe($token);
+        $this->service->addTokenUnsafe($token);
         $this->notify('Token saved successfully');
     }
 
     public function setPresenceAction ($presence) {
         $isAway = (strtolower($presence) === 'away');
-        $this->model->setPresence($isAway);
+        $this->service->setPresence($isAway);
         $this->notify('You are now marked as ​"' . ($isAway ? 'away' : 'active') . '"');
     }
 
     public function refreshCacheAction () {
-        $this->model->refreshCache();
+        $this->service->refreshCache();
         $this->notify('Cache refresh successfully');
     }
 
     public function markAllAsReadAction () {
-        $this->model->markAllAsRead();
+        $this->service->markAllAsRead();
     }
 
     private function render () {
@@ -417,15 +421,19 @@ class SlackController {
     }
 
     private function getUsers ($excludeSlackBot = false) {
-        $users = $this->model->getUsers(true);
-        $auth = $this->model->getAuth();
+        $users = $this->service->getUsers(true);
         if ($excludeSlackBot !== false) {
-            $users = Utils::filter($users, function ($user) use ($auth) {
-                return $user->id !== $auth->user_id;
+            $users = Utils::filter($users, function ($user) {
+                return $user->getId() !== $user->getAuth()->user_id;
             });
         } else {
-            $me = Utils::find($users, [ 'id' => $auth->user_id ]);
-            $me->name = $me->profile->real_name = 'slackbot';
+            $meInTeams = Utils::filter($users, function ($user) {
+                return $user->getId() === $user->getAuth()->user_id;
+            });
+            foreach ($meInTeams as $me) {
+                $me->setName('slackbot');
+                $me->getProfile()->real_name = 'slackbot';
+            }
         }
         return $users;
     }

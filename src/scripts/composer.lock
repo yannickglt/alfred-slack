@@ -1,10 +1,11 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "88ebd113171ca6aba2dda1c15f23f82e",
+    "hash": "2e831ea513ddd002b8a30ef3d6291903",
+    "content-hash": "cd55de03ebee03773fab0301f2367217",
     "packages": [
         {
             "name": "frlnc/php-slack",

@@ -1,9 +1,12 @@
-<?php namespace Frlnc\Slack\Core;
+<?php
+
+namespace AlfredSlack\Helpers\Core;
 
 use InvalidArgumentException;
 use Frlnc\Slack\Contracts\Http\Interactor;
+use Frlnc\Slack\Core\Commander;
 
-class CustomCommander extends \Frlnc\Slack\Core\Commander {
+class CustomCommander extends Commander {
 
     /**
      * Executes a command.

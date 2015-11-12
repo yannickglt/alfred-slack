@@ -1,4 +1,6 @@
-<?php namespace Frlnc\Slack\Http;
+<?php
+
+namespace AlfredSlack\Helpers\Http;
 
 use Frlnc\Slack\Http\CurlInteractor;
 use Frlnc\Slack\Contracts\Http\ResponseFactory;

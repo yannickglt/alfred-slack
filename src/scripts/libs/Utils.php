@@ -1,6 +1,5 @@
 <?php
-
-require_once 'workflows.php';
+namespace AlfredSlack\Libs;
 
 class Utils {
 
@@ -33,6 +32,10 @@ class Utils {
 	}
 
 	public static function find ($array, $predicate) {
+		if (empty($array)) {
+			return;
+		}
+		
 		$fn = self::matches($predicate);
 		foreach ($array as $value) {
 			if ($fn($value)) {
@@ -57,6 +60,12 @@ class Utils {
         return is_array($d) ? (object) array_map(__METHOD__, $d) : $d;
     }
 
+    public static function snakeCase($content, $separator = '_') {
+		$content = preg_replace('#(?<=[a-zA-Z])([A-Z])(?=[a-zA-Z])#e', "'$separator' . strtolower('$1')", $content);
+		$content{0} = strtolower($content{0});
+		return $content;
+	}
+
 	public static function debug ($var) {
         ob_start();
         var_dump($var);
@@ -79,4 +88,10 @@ class Utils {
 		}
 		return self::$_workflows;
 	}
+
+    public static function defineTimeZone () {
+        $tz = exec( 'tz=`ls -l /etc/localtime` && echo ${tz#*/zoneinfo/}' );
+        date_default_timezone_set($tz);
+    }
+
 }
