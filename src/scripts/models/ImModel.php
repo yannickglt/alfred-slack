@@ -13,4 +13,10 @@ class ImModel extends Model {
 	protected $is_user_deleted;
 
 	protected $auth;
+	
+	public function __construct ($object) {
+		parent::__construct($object);
+		$this->auth = new AuthModel($this->auth);
+	}
+	
 }

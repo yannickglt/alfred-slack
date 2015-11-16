@@ -20,6 +20,7 @@
             "AlfredSlack\\Helpers\\Service\\": ["helpers/service/"],
             "AlfredSlack\\Libs\\": ["libs/"],
             "AlfredSlack\\Models\\": ["models/"]
-        }
+        },
+        "files": ["config/routes.php"]
     }
 }

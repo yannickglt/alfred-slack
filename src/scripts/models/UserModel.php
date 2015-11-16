@@ -2,7 +2,7 @@
 
 namespace AlfredSlack\Models;
 
-class UserModel extends Model {
+class UserModel extends Model implements ChatInterface {
 
 	protected $_type = 'user';
 
@@ -25,4 +25,10 @@ class UserModel extends Model {
 	protected $is_bot;
 
 	protected $auth;
+	
+	public function __construct ($object) {
+		parent::__construct($object);
+		$this->auth = new AuthModel($this->auth);
+	}
+
 }

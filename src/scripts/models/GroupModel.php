@@ -2,7 +2,7 @@
 
 namespace AlfredSlack\Models;
 
-class GroupModel extends Model {
+class GroupModel extends Model implements ChatInterface {
 
 	protected $_type = 'group';
 
@@ -23,4 +23,10 @@ class GroupModel extends Model {
 	protected $unread_count_display;
 	
 	protected $auth;
+
+	public function __construct ($object) {
+		parent::__construct($object);
+		$this->auth = new AuthModel($this->auth);
+	}
+
 }

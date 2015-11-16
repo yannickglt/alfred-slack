@@ -14,9 +14,10 @@ interface SlackServiceInterface {
 	public function getFiles ();
 	public function getFile (\AlfredSlack\Models\FileModel $file);
 	public function getStarredItems ();
-	public function getImIdByUserId (\AlfredSlack\Models\UserModel $user);
+	//public function getImIdByUserId (\AlfredSlack\Models\UserModel $user);
+	public function getImByUser (\AlfredSlack\Models\UserModel $user);
 	public function setPresence ($isAway);
-	public function postMessage (\AlfredSlack\Models\ChannelModel $channel, $message, $asBot);
+	public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot);
 	public function getChannelHistory (\AlfredSlack\Models\ChannelModel $channel);
 	public function getGroupHistory (\AlfredSlack\Models\GroupModel $group);
 	public function getImHistory (\AlfredSlack\Models\ImModel $im);

@@ -2,7 +2,7 @@
 
 namespace AlfredSlack\Models;
 
-class ChannelModel extends Model {
+class ChannelModel extends Model implements ChatInterface {
 	
 	protected $_type = 'channel';
 
@@ -24,4 +24,10 @@ class ChannelModel extends Model {
 	protected $unread_count_display;
 
 	protected $auth;
+	
+	public function __construct ($object) {
+		parent::__construct($object);
+		$this->auth = new AuthModel($this->auth);
+	}
+
 }

@@ -1,14 +1,13 @@
 <?php
 
-//error_reporting(E_ALL);
+error_reporting(E_ALL);
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$config = [
-	'query' => $query,
-	'input' => isset($input) ? ($input === true) : false,
-	'modifier' => isset($modifier) ? $modifier : null
-];
+$input = isset($input) ? ($input === true) : false;
+$modifier = isset($modifier) ? $modifier : null;
+
+$config = new AlfredSlack\Libs\Query($query, $input, $modifier);
 
 $bs = new AlfredSlack\Libs\Bootstrap();
 $bs->run($config);

@@ -13,9 +13,11 @@ class Utils {
 		} else {
 			return function ($element) use ($predicate) {
 				if (is_object($predicate) || is_array($predicate)) {
-					$element = (array) $element;
 					foreach ($predicate as $key => $value) {
-						if ($element[$key] !== $value) {
+						if (is_array($element) && ($element[$key] !== $value)) {
+							return false;
+						}
+						elseif (is_object($element) && ($element->$key !== $value)) {
 							return false;
 						}
 					}
@@ -36,7 +38,7 @@ class Utils {
 			return;
 		}
 		
-		$fn = self::matches($predicate);
+		$fn = static::matches($predicate);
 		foreach ($array as $value) {
 			if ($fn($value)) {
 				return $value;
@@ -46,7 +48,7 @@ class Utils {
 	}
 
 	public static function filter ($array, $predicate) {
-		return array_values(array_filter($array, self::matches($predicate)));
+		return array_values(array_filter($array, static::matches($predicate)));
 	}
 	
 	public static function toArray ($d) {
@@ -61,9 +63,19 @@ class Utils {
     }
 
     public static function snakeCase($content, $separator = '_') {
-		$content = preg_replace('#(?<=[a-zA-Z])([A-Z])(?=[a-zA-Z])#e', "'$separator' . strtolower('$1')", $content);
-		$content{0} = strtolower($content{0});
-		return $content;
+    	return strtolower(preg_replace('/([^A-Z])([A-Z])/', "$1$separator$2", $content)); 
+	}
+
+    public static function camelCase($content) {
+    	return preg_replace('/_(.?)/', function ($m) {
+    		return strtoupper($m[1]);
+    	}, $content);
+	}
+
+    public static function pascalCase($content) {
+    	return preg_replace('/(?:^|_)(.?)/', function ($m) {
+    		return strtoupper($m[1]);
+    	}, $content);
 	}
 
 	public static function debug ($var) {
@@ -83,10 +95,10 @@ class Utils {
 	}
 
 	public static function getWorkflows () {
-		if (self::$_workflows === null) {
-			self::$_workflows = new Workflows();
+		if (static::$_workflows === null) {
+			static::$_workflows = new Workflows();
 		}
-		return self::$_workflows;
+		return static::$_workflows;
 	}
 
     public static function defineTimeZone () {

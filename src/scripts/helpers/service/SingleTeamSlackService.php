@@ -55,7 +55,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
             if (is_null($file)) {
                 $file = $this->getFile($fileId);
             }
-            if (!is_null($file) && property_exists($file, 'thumb_64')) {
+            if (!is_null($file) && property_exists($file, 'thumb_64') && !empty($file->thumb_64)) {
                 Utils::getWorkflows()->write(file_get_contents($file->thumb_64), 'file.image.'.$fileId);
                 $icon = Utils::getWorkflows()->readPath('file.image.'.$fileId);
             }
@@ -113,6 +113,10 @@ class SingleTeamSlackService implements SlackServiceInterface {
         $ims = Utils::getWorkflows()->read('ims');
         if ($ims === false) {
             $ims = $this->commander->execute('im.list')->getBody()['ims'];
+            $auth = $this->getAuth();
+            foreach ($ims as $index => $im) {
+                $ims[$index] = Utils::extend($im, [ 'auth' => $auth ]);
+            }
             if ($excludeDeleted === true) {
                 $ims = Utils::filter($ims, [ 'is_user_deleted' => false ]);
             }
@@ -154,7 +158,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
             Utils::getWorkflows()->write($files, 'files');
             $files = Utils::getWorkflows()->read('files');
         }
-        return $files;
+        return ModelFactory::getModels($files, '\AlfredSlack\Models\FileModel');
     }
     
     public function getFile (\AlfredSlack\Models\FileModel $file) {
@@ -183,9 +187,20 @@ class SingleTeamSlackService implements SlackServiceInterface {
         if (!empty($im)) {
             return $im->getId();
         } else {
-            $im = $this->openIm($userId);
+            $im = $this->openIm($user);
             return $im->channel->id;
         }
+    }
+
+    public function getImByUser (\AlfredSlack\Models\UserModel $user) {
+        $userId = $user->getId();
+        // Get the IM id if a user
+        $ims = $this->getIms(true);
+        $im = Utils::find($ims, [ 'user' => $userId ]);
+        if (empty($im)) {
+            $im = $this->openIm($user);
+        }
+        return ModelFactory::getModel($im, '\AlfredSlack\Models\ImModel');
     }
 
     private function getToken ($teamId) {
@@ -201,9 +216,15 @@ class SingleTeamSlackService implements SlackServiceInterface {
         $this->commander->execute('users.setPresence', [ 'presence' => $isAway ? 'away' : 'auto' ])->getBody();
     }
 
-    public function postMessage (\AlfredSlack\Models\ChannelModel $channel, $message, $asBot = false) {
+    public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
+
+        $id = $channel->getId();
+        if ($channel instanceof AlfredSlack\Models\UserModel) {
+            $id = $this->getImIdByUserId($id);
+        }
+
         return $this->commander->execute('chat.postMessage', [
-            'channel' => $channel,
+            'channel' => $id,
             'text' => $message,
             'as_user' => !$asBot,
             'parse' => 'full',
@@ -241,8 +262,8 @@ class SingleTeamSlackService implements SlackServiceInterface {
         
         // Refresh user icons
         foreach ($this->getUsers() as $user) {
-            Utils::getWorkflows()->delete('user.image.' . $user->id);
-            $this->getProfileIcon($user->id);
+            Utils::getWorkflows()->delete('user.image.' . $user->getId());
+            $this->getProfileIcon($user);
         }
 
         // Refresh users
@@ -251,8 +272,8 @@ class SingleTeamSlackService implements SlackServiceInterface {
         
         // Refresh file icons
         foreach ($this->getFiles() as $file) {
-            Utils::getWorkflows()->delete('file.image.' . $file->id);
-            $this->getFileIcon($file->id);
+            Utils::getWorkflows()->delete('file.image.' . $file->getId());
+            $this->getFileIcon($file);
         }
         
         // Refresh ims

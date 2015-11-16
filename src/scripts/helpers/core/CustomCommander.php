@@ -26,10 +26,10 @@ class CustomCommander extends Commander {
                 $parameters = [];
             }
 
-            if (!isset(self::$commands[$command]))
+            if (!isset(static::$commands[$command]))
                 throw new InvalidArgumentException("The command '{$command}' is not currently supported");
 
-            $command = self::$commands[$command];
+            $command = static::$commands[$command];
 
             if ($command['token'])
                 $parameters = array_merge($parameters, ['token' => $this->token]);
@@ -37,13 +37,13 @@ class CustomCommander extends Commander {
             if (isset($command['format']))
                 foreach ($command['format'] as $format)
                     if (isset($parameters[$format]))
-                        $parameters[$format] = self::format($parameters[$format]);
+                        $parameters[$format] = static::format($parameters[$format]);
 
             $headers = [];
             if (isset($command['headers']))
                 $headers = $command['headers'];
 
-            $url = self::$baseUrl . $command['endpoint'];
+            $url = static::$baseUrl . $command['endpoint'];
 
             if (isset($command['post']) && $command['post'])
                 return $this->interactor->post($url, [], $parameters, $headers);
@@ -63,11 +63,11 @@ class CustomCommander extends Commander {
      */
     public function executeAsync($command, array $parameters = [])
     {
-        if (!isset(self::$commands[$command])) {
+        if (!isset(static::$commands[$command])) {
             throw new InvalidArgumentException("The command '{$command}' is not currently supported");
         }
 
-        $command = self::$commands[$command];
+        $command = static::$commands[$command];
 
         if ($command['token']) {
             $parameters = array_merge($parameters, ['token' => $this->token]);
@@ -76,7 +76,7 @@ class CustomCommander extends Commander {
         if (isset($command['format'])) {
             foreach ($command['format'] as $format) {
                 if (isset($parameters[$format])) {
-                    $parameters[$format] = self::format($parameters[$format]);
+                    $parameters[$format] = static::format($parameters[$format]);
                 }
             }
         }
@@ -86,7 +86,7 @@ class CustomCommander extends Commander {
             $headers = $command['headers'];
         }
 
-        $url = self::$baseUrl . $command['endpoint'];
+        $url = static::$baseUrl . $command['endpoint'];
 
         if (isset($command['post']) && $command['post']) {
             $this->interactor->postAsync($url, [], $parameters, $headers);

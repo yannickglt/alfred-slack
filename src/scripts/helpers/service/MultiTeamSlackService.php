@@ -168,10 +168,10 @@ class MultiTeamSlackService implements SlackServiceInterface {
     	return $res;
     }
 
-    public function getImIdByUserId (\AlfredSlack\Models\UserModel $user) {
+    public function getImByUser (\AlfredSlack\Models\UserModel $user) {
         $teamId = $user->getAuth()->team_id;
-    	$model = $this->services[$teamId];
-    	return $model->getImIdByUserId($user->getId());
+        $model = $this->services[$teamId];
+        return $model->getImByUser($user);
     }
 
     public function setPresence ($isAway = false) {
@@ -180,26 +180,26 @@ class MultiTeamSlackService implements SlackServiceInterface {
     	}
     }
 
-    public function postMessage (\AlfredSlack\Models\ChannelModel $channel, $message, $asBot = false) {
-        $teamId = $channel->getAuth()->team_id;
+    public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
+        $teamId = $channel->getAuth()->getTeamId();
         $model = $this->services[$teamId];
         return $model->postMessage($channel, $message, $asBot);
     }
 
     public function getChannelHistory (\AlfredSlack\Models\ChannelModel $channel) {
-        $teamId = $channel->getAuth()->team_id;
+        $teamId = $channel->getAuth()->getTeamId();
         $model = $this->services[$teamId];
     	return $model->getChannelHistory($channel);
     }
 
     public function getGroupHistory (\AlfredSlack\Models\GroupModel $group) {
-        $teamId = $group->getAuth()->team_id;
+        $teamId = $group->getAuth()->getTeamId();
         $model = $this->services[$teamId];
         return $model->getGroupHistory($group);
     }
 
     public function getImHistory (\AlfredSlack\Models\ImModel $im) {
-        $teamId = $im->getAuth()->team_id;
+        $teamId = $im->getAuth()->getTeamId();
         $model = $this->services[$teamId];
     	return $model->getImHistory($im);
     }

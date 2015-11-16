@@ -3,6 +3,7 @@
 namespace AlfredSlack\Controllers;
 
 use AlfredSlack\Libs\Utils;
+use AlfredSlack\Libs\Route;
 use AlfredSlack\Helpers\Service\MultiTeamSlackService;
 
 class SlackController {
@@ -28,8 +29,8 @@ class SlackController {
             $results[] = [
                 'title' => '#'.$channel->getName(),
                 'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
-                'data' => Utils::extend($channel, [ 'type' => 'channel', 'message' => $message ]),
-                'autocomplete' => '#'.$channel->getName().' '
+                'autocomplete' => '#'.$channel->getName().' ',
+                'route' => new Route('slack', 'openChannel', [ 'channel' => $channel ])
             ];
         }
 
@@ -38,8 +39,8 @@ class SlackController {
             $results[] = [
                 'title' => '#'.$group->getName(),
                 'description' => 'Group - ' . count($group->getMembers()) . ' members',
-                'data' => Utils::extend($group, [ 'type' => 'group', 'message' => $message ]),
-                'autocomplete' => '#'.$group->getName().' '
+                'autocomplete' => '#'.$group->getName().' ',
+                'route' => new Route('slack', 'openChannel', [ 'channel' => $group ])
             ];
         }
 
@@ -50,16 +51,18 @@ class SlackController {
                 'title' => '@'.$user->getName(),
                 'description' => 'User - ' . $user->getProfile()->real_name,
                 'icon' => $icon,
-                'data' => Utils::extend($user, [ 'type' => 'user', 'message' => $message ]),
-                'autocomplete' => '@'.$user->getName().' '
+                'autocomplete' => '@'.$user->getName().' ',
+                'route' => new Route('slack', 'openChannel', [ 'channel' => $user ])
             ];
         }
 
         $this->results = $this->filterResults($results, $search);
-        if (!is_null($message)) {
+
+        if (!empty($message) && (count($this->results) > 0)) {
             $firstResult = $this->results[0];
             $firstResult['title'] = 'Send "'.$message.'" to ' . $firstResult['title'];
             $firstResult['autocomplete'] .= $message;
+            $firstResult['route'] = new Route('slack', 'sendMessage', [ 'channel' => $firstResult['route']->getParams()['channel'], 'message' => $message ]);
             $this->results = [$firstResult];
         }
 
@@ -72,54 +75,59 @@ class SlackController {
             [
                 'title' => '--token',
                 'description' => 'Set the Slack token in the keychain (recommended)',
-                'data' => Utils::toObject([ 'type' => 'token', 'token' => $param ]),
-                'autocomplete' => '--token '
+                'autocomplete' => '--token ',
+                'route' => new Route('slack', 'saveToken', [ 'token' => $param ])
             ],
             [
                 'title' => '--token-unsafe',
                 'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
-                'data' => Utils::toObject([ 'type' => 'token-unsafe', 'token' => $param ]),
-                'autocomplete' => '--token-unsage '
+                'autocomplete' => '--token-unsafe ',
+                'route' => new Route('slack', 'saveTokenUnsafe', [ 'token' => $param ])
             ],
             [
                 'title' => '--mark',
                 'description' => 'Mark all as read',
-                'data' => Utils::toObject([ 'type' => 'mark' ]),
-                'autocomplete' => '--mark '
+                'autocomplete' => '--mark ',
+                'route' => new Route('slack', 'markAllAsRead')
             ],
             [
                 'title' => '--files',
                 'description' => 'List the files within the team',
-                'data' => Utils::toObject([ 'type' => 'files' ]),
-                'autocomplete' => '--files '
+                'autocomplete' => '--files ',
+                'route' => new Route('slack', 'getFiles', [ 'search' => $param ])
             ],
             [
                 'title' => '--search',
                 'description' => 'Search both messages and files',
-                'data' => Utils::toObject([ 'type' => 'search' ]),
-                'autocomplete' => '--search '
+                'autocomplete' => '--search ',
+                'route' => new Route('slack', 'search', [ 'search' => $param ])
             ],
             [
                 'title' => '--stars',
                 'description' => 'List the items starred',
-                'data' => Utils::toObject([ 'type' => 'stars' ]),
-                'autocomplete' => '--stars '
+                'autocomplete' => '--stars ',
+                'route' => new Route('slack', 'getStarredItems', [ 'search' => $param ])
             ],
             [
                 'title' => '--presence',
                 'description' => 'Set the user presence (either active or away)',
-                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => $param ]),
-                'autocomplete' => '--presence '
+                'autocomplete' => '--presence ',
+                'route' => new Route('slack', 'listPresences', [ 'presence' => $param ])
             ],
             [
                 'title' => '--refresh',
                 'description' => 'Refresh the cache',
-                'data' => Utils::toObject([ 'type' => 'refresh' ]),
-                'autocomplete' => '--refresh '
+                'autocomplete' => '--refresh ',
+                'route' => new Route('slack', 'refreshCache')
             ]
         ];
 
-        $this->results = $this->filterResults($results, $action);
+        if (!empty($action)) {
+            $this->results = $this->filterResults($results, $action);
+        } else {
+            $this->results = $results;
+        }
+
         $this->render();
     }
 
@@ -129,14 +137,14 @@ class SlackController {
             [
                 'title' => '--presence away',
                 'description' => 'Set the presence as away',
-                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => 'away' ]),
-                'autocomplete' => '--presence away '
+                'autocomplete' => '--presence away ',
+                'route' => new Route('slack', 'setPresence', [ 'presence' => 'away' ])
             ],
             [
                 'title' => '--presence active',
                 'description' => 'Set the presence as active',
-                'data' => Utils::toObject([ 'type' => 'presence', 'presence' => 'active' ]),
-                'autocomplete' => '--presence active '
+                'autocomplete' => '--presence active ',
+                'route' => new Route('slack', 'setPresence', [ 'presence' => 'active' ])
             ],
         ];
 
@@ -145,6 +153,7 @@ class SlackController {
         } else {
             $this->results = $this->filterResults($results, $presence);
         }
+
         $this->render();
     }
 
@@ -155,33 +164,30 @@ class SlackController {
         $channels = $this->service->getChannels(true);
         foreach ($channels as $channel) {
             $results[] = [
-                'id' => $channel->id,
-                'title' => '#'.$channel->name,
-                'description' => 'Channel - ' . $channel->num_members . ' members - ' . ($channel->is_member ? 'Already a member' : 'Not a member'),
-                'type' => 'channel',
-                'data' => Utils::extend($channel, [ 'type' => 'channel' ])
+                'id' => $channel->getId(),
+                'title' => '#'.$channel->getName(),
+                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'route' => new Route('slack', 'getChannelHistory', [ 'channel' => $channel ])
             ];
         }
 
         $groups = $this->service->getGroups(true);
         foreach ($groups as $group) {
             $results[] = [
-                'id' => $group->id,
-                'title' => '#'.$group->name,
-                'description' => 'Group - ' . count($group->members) . ' members',
-                'type' => 'group',
-                'data' => Utils::extend($group, [ 'type' => 'group' ])
+                'id' => $group->getId(),
+                'title' => '#'.$group->getName(),
+                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'route' => new Route('slack', 'getChannelHistory', [ 'channel' => $group ])
             ];
         }
 
         $users = $this->getUsers();
         foreach ($users as $user) {
             $results[] = [
-                'id' => $user->id,
-                'title' => '@'.$user->name,
+                'id' => $user->getId(),
+                'title' => '@'.$user->getName(),
                 'description' => 'User - ' . $user->profile->real_name,
-                'type' => 'user',
-                'data' => Utils::extend($user, [ 'type' => 'user' ])
+                'route' => new Route('slack', 'getChannelHistory', [ 'channel' => $user ])
             ];
         }
 
@@ -192,34 +198,34 @@ class SlackController {
         }
 
         $history = [];
-        $icon = null;
         $firstResult = $results[0];
-        $teamId = $firstResult['data']->auth->team_id;
-        switch($firstResult['type']) {
-            case 'channel':
-                $history = $this->service->getChannelHistory($teamId, $firstResult['id']);
-                $this->service->markChannelAsRead($teamId, $firstResult['id']);
-                break;
-            case 'group':
-                $history = $this->service->getGroupHistory($teamId, $firstResult['id']);
-                $this->service->markGroupAsRead($teamId, $firstResult['id']);
-                break;
-            case 'user':
-                $imId = $this->service->getImIdByUserId($teamId, $firstResult['id']);
-                $history = $this->service->getImHistory($teamId, $imId);
-                $this->service->markImAsRead($imId);
-                break;
+        $data = $firstResult['route']->getParams()['channel'];
+        $teamId = $data->auth->team_id;
+        $icon = null;
+        if ($data instanceof \AlfredSlack\Models\ChannelModel) {
+            $history = $this->service->getChannelHistory($data);
+            $this->service->markChannelAsRead($data);
+        }
+        elseif ($data instanceof \AlfredSlack\Models\GroupModel) {
+            $history = $this->service->getGroupHistory($data);
+            $this->service->markGroupAsRead($data);
+        }
+        elseif ($data instanceof \AlfredSlack\Models\UserModel) {
+            $im = $this->service->getImByUser($data);
+            $history = $this->service->getImHistory($im);
+            $icon = $this->service->getProfileIcon($data);
+            $this->service->markImAsRead($im);
         }
 
         foreach ($history as $message) {
-            $date = new DateTime();
-            $date->setTimestamp($message['ts']);
+            $date = new \DateTime();
+            $date->setTimestamp($message->getTs());
             $this->results[] = [
-                'title' => $message['text'],
+                'title' => $message->getText(),
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $this->service->getProfileIcon($message['user']),
-                'data' => $firstResult['data'],
-                'autocomplete' => $firstResult['title'].' '
+                'icon' => $icon,
+                'autocomplete' => $firstResult['title'].' ',
+                'route' => $firstResult['route']
             ];
         }
 
@@ -231,14 +237,14 @@ class SlackController {
 
         $results = [];
         foreach ($files as $file) {
-            $icon = !is_null($file->thumb_64) ? $this->service->getFileIcon($file->id) : null;
+            $icon = !is_null($file->getThumb64()) ? $this->service->getFileIcon($file->getId()) : null;
             $results[] = [
-                'id' => $file->id,
-                'title' => $file->name,
-                'description' => $file->title,
+                'id' => $file->getId(),
+                'title' => $file->getName(),
+                'description' => $file->getTitle(),
                 'icon' => $icon,
-                'data' => Utils::extend($file, [ 'type' => 'file' ]),
-                'autocomplete' => '--files ' . $file->name
+                'autocomplete' => '--files ' . $file->getName(),
+                'route' => new Route('slack', 'openFile', [ 'file' => $file ])
             ];
         }
 
@@ -258,25 +264,25 @@ class SlackController {
         foreach ($items as $item) {
             switch ($item->type) {
                 case 'message':
-                    $date = new DateTime();
-                    $date->setTimestamp($item->message->ts);
+                    $date = new \DateTime();
+                    $date->setTimestamp($item->message->getTs());
                     $results[] = [
-                        'title' => $item->message->text,
+                        'title' => $item->message->getText(),
                         'description' => $date->format('F jS - H:i'),
-                        'icon' => $this->service->getProfileIcon($item->message->user),
-                        'data' => Utils::extend($item->message, [ 'type' => 'file' ]),
-                        'autocomplete' => '--stars ' . $item->message->text
+                        'icon' => $this->service->getProfileIcon($item->message->getUser()),
+                        'autocomplete' => '--stars ' . $item->message->getText(),
+                        'route' => new Route('slack', 'openFile', [ 'file' => $item->message ]) // open the message like a file (redirect to the slack history)
                     ];
                     break;
                 case 'file':
-                    $icon = !is_null($item->file->thumb_64) ? $this->service->getFileIcon($item->file->id) : null;
+                    $icon = !is_null($item->file->getThumb64()) ? $this->service->getFileIcon($item->file->getId()) : null;
                     $results[] = [
-                        'id' => $item->file->id,
-                        'title' => $item->file->name,
-                        'description' => $item->file->title,
+                        'id' => $item->file->getId(),
+                        'title' => $item->file->getName(),
+                        'description' => $item->file->getTitle(),
                         'icon' => $icon,
-                        'data' => Utils::extend($item->file, [ 'type' => 'file' ]),
-                        'autocomplete' => '--stars ' . $item->file->name
+                        'autocomplete' => '--stars ' . $item->file->getName(),
+                        'route' => new Route('slack', 'openFile', [ 'file' => $item->file ])
                     ];
                     break;
             }
@@ -296,23 +302,23 @@ class SlackController {
 
         $results = [];
         foreach ($searchResults['messages'] as $message) {
-            $date = new DateTime();
-            $date->setTimestamp($message['ts']);
+            $date = new \DateTime();
+            $date->setTimestamp($message->getTs());
             $results[] = [
-                'title' => $message['text'],
+                'title' => $message->getText(),
                 'description' => $date->format('F jS - H:i'),
-                'icon' => $this->service->getProfileIcon($message['user']),
-                'data' => Utils::extend($message, [ 'type' => 'file' ])
+                'icon' => $this->service->getProfileIcon($message->getUser()),
+                'route' => new Route('slack', 'openFile', [ 'file' => $message ]) // open the message like a file (redirect to the slack history)
             ];
         }
         foreach ($searchResults['files'] as $file) {
-            $icon = !is_null($file->thumb_64) ? $this->service->getFileIcon($file->id) : null;
+            $icon = !is_null($file->getThumb64()) ? $this->service->getFileIcon($file->getId()) : null;
             $results[] = [
-                'id' => $file->id,
-                'title' => $file->name,
-                'description' => $file->title,
+                'id' => $file->getId(),
+                'title' => $file->getName(),
+                'description' => $file->getTitle(),
                 'icon' => $icon,
-                'data' => Utils::extend($file, [ 'type' => 'file' ])
+                'route' => new Route('slack', 'openFile', [ 'file' => $file ])
             ];
         }
 
@@ -333,38 +339,37 @@ class SlackController {
         $this->render();
     }
 
-    public function openChannelAction ($data) {
+    public function openChannelAction (\AlfredSlack\Models\ChatInterface $channel) {
 
-        $id = $data->id;
+        $id = $channel->getId();
 
         // Get the IM id if a user
-        if ($data->type === 'user') {
-            $id = $this->service->getImIdByUserId($data->id);
+        if ($channel instanceof \AlfredSlack\Models\UserModel) {
+            $im = $this->service->getImByUser($channel);
+            $id = $im->getId();
+            //$id = $this->service->getImIdByUserId($id);
         }
 
-        $url = 'slack://channel?id='.$id.'&team='.$data->auth->team_id;
+        $url = 'slack://channel?id='.$id.'&team='.$channel->getAuth()->getTeamId();
         Utils::openUrl($url);
         Utils::openApp('Slack');
     }
 
     public function openFileAction ($file) {
-        Utils::openUrl($file->permalink);
+        Utils::openUrl($file->getPermalink());
     }
 
-    public function sendMessageAction ($data) {
+    public function sendMessageAction ($channel, $message) {
 
-        $id = $data->id;
-        $title = $data->name;
+        $this->service->postMessage($channel, $message);
 
         // Get the IM id if a user
-        if ($data->type === 'user') {
-            $id = $this->service->getImIdByUserId($data->id);
+        $title = $channel->getName();
+        if ($channel instanceof \AlfredSlack\Models\UserModel) {
             $title = '@' . $title;
         } else {
             $title = '#' . $title;
         }
-
-        $this->service->postMessage($id, $data->message);
 
         $this->notify('Message sent successfully to ' . $title);
     }
@@ -402,7 +407,7 @@ class SlackController {
         $i = 0;
         foreach ($this->results as $result) {
             $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
-            $this->workflows->result($i++, json_encode($result['data']), $result['title'], $result['description'], $icon, 'yes', $result['autocomplete']);
+            $this->workflows->result($i++, json_encode($result['route']), $result['title'], $result['description'], $icon, 'yes', $result['autocomplete']);
         }
 
         $this->isRendered = true;

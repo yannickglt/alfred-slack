@@ -78,7 +78,7 @@ class SlackRouter {
 	public static function getAction ($input, $query) {
 		$router = new SlackRouter();
 		$type =	$input ? 'input' : 'output';
-		foreach (self::$routingOrder as $action) {
+		foreach (static::$routingOrder as $action) {
 			if ($action['type'] === $type) {
 				$res = $router->{'check'.ucfirst($action['name'])}($query);
 				if (!empty($res)) {
