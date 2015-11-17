@@ -340,6 +340,7 @@ class SlackController {
 
         $url = 'slack://channel?id='.$id.'&team='.$data->auth->team_id;
         Utils::openUrl($url);
+        Utils::openApp('Slack');
     }
 
     public function openFileAction ($file) {

@@ -65,6 +65,10 @@ class Utils {
         error_log($trace);
 	}
 
+	public static function openApp ($appName) {
+		exec('open -a '.$appName);
+	}
+	
 	public static function openUrl ($url) {
 		exec('open "'.$url.'"');
 	}

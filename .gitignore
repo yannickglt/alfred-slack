@@ -1,3 +1,4 @@
 src/scripts/vendor/
 src/.idea
 Slack.alfredworkflow
+.DS_Store
