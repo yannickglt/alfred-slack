@@ -4,8 +4,8 @@ namespace AlfredSlack\Helpers\Service;
 
 interface SlackServiceInterface {
 
-	public function getProfileIcon (\AlfredSlack\Models\UserModel $user);
-	public function getFileIcon (\AlfredSlack\Models\FileModel $file);
+	public function getProfileIcon ($userId);
+	public function getFileIcon ($fileId);
 	public function getChannels ($excludeArchived);
 	public function getGroups ($excludeArchived);
 	public function getIms ($excludeDeleted);
@@ -14,7 +14,6 @@ interface SlackServiceInterface {
 	public function getFiles ();
 	public function getFile (\AlfredSlack\Models\FileModel $file);
 	public function getStarredItems ();
-	//public function getImIdByUserId (\AlfredSlack\Models\UserModel $user);
 	public function getImByUser (\AlfredSlack\Models\UserModel $user);
 	public function setPresence ($isAway);
 	public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot);

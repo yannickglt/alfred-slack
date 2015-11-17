@@ -13,7 +13,7 @@ class MultiCurlInteractor extends \Frlnc\Slack\Http\CurlInteractor {
     public function getAll($urlsWithParameters)
     {
         $requests = $this->prepareRequests($urlsWithParameters);
-        $this->executeMultiRequest($requests['multiRequest'], $requests['singleRequests']);
+        return $this->executeMultiRequest($requests['multiRequest'], $requests['singleRequests']);
     }
 
     /**

@@ -73,10 +73,9 @@ class MultiTeamSlackService implements SlackServiceInterface {
         */
     }
 
-    public function getProfileIcon (\AlfredSlack\Models\UserModel $user) {
-        $userId = $user->getId();
+    public function getProfileIcon ($userId) {
     	foreach ($this->services as $model) {
-    		$icon = $model->getProfileIcon($user);
+    		$icon = $model->getProfileIcon($userId);
     		if ($icon !== false) {
     			return $icon;
     		}
@@ -84,8 +83,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
     	return false;
     }
     
-    public function getFileIcon (\AlfredSlack\Models\FileModel $file) {
-        $fileId = $file->getId();
+    public function getFileIcon ($fileId) {
     	foreach ($this->services as $model) {
     		$icon = $model->getFileIcon($fileId);
     		if ($icon !== false) {
@@ -156,14 +154,10 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
 
     public function search ($query) {
-    	$res = [
-    		'messages' => [],
-    		'files' => []
-		];
+        $res = [];
     	foreach ($this->services as $model) {
     		$search = $model->search($query);
-    		$res['messages'] = array_merge($res['messages'], $search['messages']['matches']);
-    		$res['files'] = array_merge($res['files'], $search['files']['matches']);
+            $res = $res + $search;
     	}
     	return $res;
     }

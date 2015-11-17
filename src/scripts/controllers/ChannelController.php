@@ -1,0 +1,182 @@
+<?php
+
+namespace AlfredSlack\Controllers;
+
+use AlfredSlack\Libs\Utils;
+use AlfredSlack\Libs\Route;
+use AlfredSlack\Helpers\Service\MultiTeamSlackService;
+
+class ChannelController extends SlackController {
+
+    public function getChannelsAction ($search, $message = null) {
+        $results = [];
+
+        $channels = $this->service->getChannels(true);
+        foreach ($channels as $channel) {
+            $results[] = [
+                'title' => '#'.$channel->getName(),
+                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'autocomplete' => '#'.$channel->getName().' ',
+                'route' => new Route('channel', 'openChannel', [ 'channel' => $channel ])
+            ];
+        }
+
+        $groups = $this->service->getGroups(true);
+        foreach ($groups as $group) {
+            $results[] = [
+                'title' => '#'.$group->getName(),
+                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'autocomplete' => '#'.$group->getName().' ',
+                'route' => new Route('channel', 'openChannel', [ 'channel' => $group ])
+            ];
+        }
+
+        $users = $this->getUsers();
+        foreach ($users as $user) {
+            $icon = $this->service->getProfileIcon($user->getId());
+            $results[] = [
+                'title' => '@'.$user->getName(),
+                'description' => 'User - ' . $user->getProfile()->real_name,
+                'icon' => $icon,
+                'autocomplete' => '@'.$user->getName().' ',
+                'route' => new Route('channel', 'openChannel', [ 'channel' => $user ])
+            ];
+        }
+
+        $this->results = $this->filterResults($results, $search);
+
+        if (!empty($message) && (count($this->results) > 0)) {
+            $firstResult = $this->results[0];
+            $firstResult['title'] = 'Send "'.$message.'" to ' . $firstResult['title'];
+            $firstResult['autocomplete'] .= $message;
+            $firstResult['route'] = new Route('channel', 'sendMessage', [ 'channel' => $firstResult['route']->getParams()['channel'], 'message' => $message ]);
+            $this->results = [$firstResult];
+        }
+
+        $this->render();
+    }
+
+    public function getChannelHistoryAction ($search) {
+
+        $results = [];
+
+        $channels = $this->service->getChannels(true);
+        foreach ($channels as $channel) {
+            $results[] = [
+                'id' => $channel->getId(),
+                'title' => '#'.$channel->getName(),
+                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $channel ])
+            ];
+        }
+
+        $groups = $this->service->getGroups(true);
+        foreach ($groups as $group) {
+            $results[] = [
+                'id' => $group->getId(),
+                'title' => '#'.$group->getName(),
+                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $group ])
+            ];
+        }
+
+        $users = $this->getUsers();
+        foreach ($users as $user) {
+            $results[] = [
+                'id' => $user->getId(),
+                'title' => '@'.$user->getName(),
+                'description' => 'User - ' . $user->profile->real_name,
+                'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $user ])
+            ];
+        }
+
+        $results = $this->filterResults($results, $search);
+
+        if (count($results) === 0) {
+            return;
+        }
+
+        $history = [];
+        $firstResult = $results[0];
+        $data = $firstResult['route']->getParams()['channel'];
+        $teamId = $data->auth->team_id;
+        $icon = null;
+        if ($data instanceof \AlfredSlack\Models\ChannelModel) {
+            $history = $this->service->getChannelHistory($data);
+            $this->service->markChannelAsRead($data);
+        }
+        elseif ($data instanceof \AlfredSlack\Models\GroupModel) {
+            $history = $this->service->getGroupHistory($data);
+            $this->service->markGroupAsRead($data);
+        }
+        elseif ($data instanceof \AlfredSlack\Models\UserModel) {
+            $im = $this->service->getImByUser($data);
+            $history = $this->service->getImHistory($im);
+            $icon = $this->service->getProfileIcon($data->getId());
+            $this->service->markImAsRead($im);
+        }
+
+        foreach ($history as $message) {
+            $date = new \DateTime();
+            $date->setTimestamp($message->getTs());
+            $this->results[] = [
+                'title' => $message->getText(),
+                'description' => $date->format('F jS - H:i'),
+                'icon' => $icon,
+                'autocomplete' => $firstResult['title'].' ',
+                'route' => $firstResult['route']
+            ];
+        }
+
+        $this->render();
+    }
+
+    public function openChannelAction (\AlfredSlack\Models\ChatInterface $channel) {
+
+        $id = $channel->getId();
+
+        // Get the IM id if a user
+        if ($channel instanceof \AlfredSlack\Models\UserModel) {
+            $im = $this->service->getImByUser($channel);
+            $id = $im->getId();
+        }
+
+        $url = 'slack://channel?id='.$id.'&team='.$channel->getAuth()->getTeamId();
+        
+        Utils::openUrl($url);
+        Utils::openApp('Slack');
+    }
+
+    public function sendMessageAction ($channel, $message) {
+
+        $this->service->postMessage($channel, $message);
+
+        // Get the IM id if a user
+        $title = $channel->getName();
+        if ($channel instanceof \AlfredSlack\Models\UserModel) {
+            $title = '@' . $title;
+        } else {
+            $title = '#' . $title;
+        }
+
+        $this->notify('Message sent successfully to ' . $title);
+    }
+
+    private function getUsers ($excludeSlackBot = false) {
+        $users = $this->service->getUsers(true);
+        if ($excludeSlackBot !== false) {
+            $users = Utils::filter($users, function ($user) {
+                return $user->getId() !== $user->getAuth()->user_id;
+            });
+        } else {
+            $meInTeams = Utils::filter($users, function ($user) {
+                return $user->getId() === $user->getAuth()->user_id;
+            });
+            foreach ($meInTeams as $me) {
+                $me->setName('slackbot');
+                $me->getProfile()->real_name = 'slackbot';
+            }
+        }
+        return $users;
+    }
+}

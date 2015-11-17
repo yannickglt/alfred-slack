@@ -32,8 +32,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
         }
     }
 
-    public function getProfileIcon (\AlfredSlack\Models\UserModel $user) {
-        $userId = $user->getId();
+    public function getProfileIcon ($userId) {
         $icon = Utils::getWorkflows()->readPath('user.image.'.$userId);
         if ($icon === false) {
             $users = $this->getUsers(true);
@@ -46,8 +45,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
         return $icon;
     }
 
-    public function getFileIcon (\AlfredSlack\Models\FileModel $file) {
-        $fileId = $file->getId();
+    public function getFileIcon ($fileId) {
         $icon = Utils::getWorkflows()->readPath('file.image.'.$fileId);
         if ($icon === false) {
             $files = $this->getFiles();
@@ -172,24 +170,24 @@ class SingleTeamSlackService implements SlackServiceInterface {
             Utils::getWorkflows()->write($stars, 'stars');
             $stars = Utils::getWorkflows()->read('stars');
         }
-        return $stars;
+        return array_map(function ($star) {
+            switch ($star->type) {
+                case 'message':
+                    return ModelFactory::getModel($star->message, '\AlfredSlack\Models\MessageModel');
+                case 'file':
+                case 'file_comment':
+                    return ModelFactory::getModel($star->file, '\AlfredSlack\Models\FileModel');
+                case 'channel':
+                    return new \AlfredSlack\Models\ChannelModel([ 'id' => $star->channel ]);
+            }
+        }, $stars);
     }
 
     public function search ($query) {
-        return $this->commander->execute('search.all', [ 'query' => $query ])->getBody();
-    }
-
-    public function getImIdByUserId (\AlfredSlack\Models\UserModel $user) {
-        $userId = $user->getId();
-        // Get the IM id if a user
-        $ims = $this->getIms(true);
-        $im = Utils::find($ims, [ 'user' => $userId ]);
-        if (!empty($im)) {
-            return $im->getId();
-        } else {
-            $im = $this->openIm($user);
-            return $im->channel->id;
-        }
+        $items = $this->commander->execute('search.all', [ 'query' => $query ])->getBody();
+        $messages = ModelFactory::getModels($items['messages']['matches'], '\AlfredSlack\Models\MessageModel');
+        $files = ModelFactory::getModels($items['files']['matches'], '\AlfredSlack\Models\FileModel');
+        return $messages + $files;
     }
 
     public function getImByUser (\AlfredSlack\Models\UserModel $user) {
@@ -220,7 +218,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
 
         $id = $channel->getId();
         if ($channel instanceof AlfredSlack\Models\UserModel) {
-            $id = $this->getImIdByUserId($id);
+            $id = $this->getImByUser($channel)->getId();
         }
 
         return $this->commander->execute('chat.postMessage', [
@@ -273,7 +271,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
         // Refresh file icons
         foreach ($this->getFiles() as $file) {
             Utils::getWorkflows()->delete('file.image.' . $file->getId());
-            $this->getFileIcon($file);
+            $this->getFileIcon($file->getId());
         }
         
         // Refresh ims

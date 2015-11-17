@@ -5,6 +5,11 @@ namespace AlfredSlack\Libs;
 class Bootstrap {
 
 	public function run (Query $config) {
+
+		// Set the timezone for the user using the system one
+        Utils::defineTimeZone();
+
+        // Retrieve the route from the given parameters
 		$route = Router::getRoute($config);
 		if ($route !== false) {
 			$this->invoke($route);
@@ -13,11 +18,20 @@ class Bootstrap {
 
 	private function invoke (Route $route) {
 		$className = 'AlfredSlack\Controllers\\'.ucfirst($route->getController()).'Controller';
+		$actionName = $route->getAction().'Action';
 		$controller = new $className();
 
-		error_log($className . '::' . $route->getAction() . 'Action()'.PHP_EOL);
+		if (!($controller instanceof \AlfredSlack\Controllers\Controller)) {
+			throw new \Exception("$className must inherits from AlfredSlack\Controllers\Controller");
+		}
+
+		error_log($className.'::'.$actionName.'()'.PHP_EOL);
 		
-		call_user_func_array(array($controller, $route->getAction().'Action'), $route->getParams());
+		$interruptAction = ($controller->preDispatch($actionName, $route->getParams()) === false);
+		if (!$interruptAction) {
+			$actionResult = $controller->dispatch($actionName, $route->getParams());
+			$controller->postDispatch($actionName, $route->getParams(), $actionResult);
+		}
 	}
 
 }

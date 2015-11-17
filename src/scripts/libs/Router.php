@@ -37,8 +37,7 @@ class Router {
 	private static function urlMatch ($pattern, $subject) {
 		$pattern = preg_quote($pattern);
 
-		//$regexPattern = '/'.preg_replace([ '/\\\\:([^: ]*) /', '/\\\\:([^:]*)$/' ], [ '([^ ]*) ', '(.*)' ], $pattern).'/';
-		$regexPattern = '/'.preg_replace([ '/\\\\:([^: ]+) /', '/\\\\:([^:]+)$/' ], [ '([^ ]+) ', '(.+)' ], $pattern).'/';
+		$regexPattern = '/'.preg_replace([ '/\\\\:([^: ]+)\\? /', '/\\\\:([^: ]+) /', '/\\\\:([^:]+)\\?$/', '/\\\\:([^:]+)$/' ], [ '([^ ]*) ', '([^ ]+) ', '(.*)', '(.+)' ], $pattern).'/';
 
 		if (is_null($regexPattern)) {
 			return false;

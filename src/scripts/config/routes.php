@@ -8,39 +8,39 @@ Router::define(function ($router) {
 
 	$router
 		->route('--files :search', [
-			'controller' => 'slack',
+			'controller' => 'config',
 			'action' => 'getFiles'
 		])
 		->route('--stars :search', [
-			'controller' => 'slack',
+			'controller' => 'config',
 			'action' => 'getStarredItems'
 		])
 		->route('--search :search', [
-			'controller' => 'slack',
+			'controller' => 'config',
 			'action' => 'search'
 		])
 		->route('--presence :presence', [
-			'controller' => 'slack',
+			'controller' => 'config',
 			'action' => 'listPresences'
 		])
 		->route('--:config :param', [
-			'controller' => 'slack',
+			'controller' => 'config',
 			'action' => 'listConfigs'
 		])
-		->route('--:config', [
-			'controller' => 'slack',
+		->route('--:config?', [
+			'controller' => 'config',
 			'action' => 'listConfigs'
 		])
 		->route(':channel :message', [
-			'controller' => 'slack',
+			'controller' => 'channel',
 			'action' => 'getChannels'
 		])
 		->route(':channel ', [
-			'controller' => 'slack',
+			'controller' => 'channel',
 			'action' => 'getChannelHistory'
 		])
 		->route(':channel', [
-			'controller' => 'slack',
+			'controller' => 'channel',
 			'action' => 'getChannels'
 		]);
 });

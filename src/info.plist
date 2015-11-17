@@ -109,7 +109,7 @@ require_once 'scripts/index.php';</string>
 				<key>concurrently</key>
 				<false/>
 				<key>escaping</key>
-				<integer>100</integer>
+				<integer>4</integer>
 				<key>script</key>
 				<string>$query = "{query}";
 $input = false;

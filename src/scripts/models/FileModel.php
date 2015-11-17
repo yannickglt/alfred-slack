@@ -47,4 +47,8 @@ class FileModel extends Model {
 	protected $ims;
 	protected $comments_count;
 
+	public function getThumb64() {
+		return $this->thumb_64;
+	}
+
 }
