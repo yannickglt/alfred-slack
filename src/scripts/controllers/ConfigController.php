@@ -211,8 +211,14 @@ class ConfigController extends SlackController {
     }
 
     public function refreshCacheAction () {
-        $this->service->refreshCache();
-        $this->notify('Cache refresh successfully');
+        $this->service->setCacheLock(true);
+        try {
+        	$this->service->refreshCache();
+	        $this->notify('Cache refresh successfully');
+        } catch (Exception $e) {
+	        $this->notify('An error occured during refresh');
+        }
+        $this->service->setCacheLock(false);
     }
 
     public function markAllAsReadAction () {

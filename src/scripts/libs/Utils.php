@@ -78,6 +78,10 @@ class Utils {
     	}, $content);
 	}
 
+	public static function log ($str) {
+		error_log($str);
+	}
+
 	public static function debug ($var) {
         ob_start();
         var_dump($var);

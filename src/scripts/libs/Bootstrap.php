@@ -25,7 +25,8 @@ class Bootstrap {
 			throw new \Exception("$className must inherits from AlfredSlack\Controllers\Controller");
 		}
 
-		error_log($className.'::'.$actionName.'()'.PHP_EOL);
+		Utils::log('ACTION: '.$className.'::'.$actionName.'()');
+		Utils::log('SIMULATE: php -r \'$query="'.str_replace('"', '\"', json_encode($route)).'";include "scripts/index.php";\';');
 		
 		$interruptAction = ($controller->preDispatch($actionName, $route->getParams()) === false);
 		if (!$interruptAction) {

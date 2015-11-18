@@ -3,8 +3,8 @@ namespace AlfredSlack\Helpers\Service;
 
 use AlfredSlack\Libs\Utils;
 
-use AlfredSlack\Helpers\SlackCore\CustomCommander;
-use AlfredSlack\Helpers\SlackHttp\MultiCurlInteractor;
+use AlfredSlack\Helpers\Core\CustomCommander;
+use AlfredSlack\Helpers\Http\MultiCurlInteractor;
 
 use Frlnc\Slack\Http\SlackResponseFactory;
 
@@ -22,10 +22,14 @@ class MultiTeamSlackService implements SlackServiceInterface {
         	foreach ($teams as $team) {
 	        	$this->services[$team->team_id] = new SingleTeamSlackService($team->team_id);
 	        }
-	    }
+	    } else {
+            $oldToken = Utils::getWorkflows()->getPassword('token');
+            Utils::getWorkflows()->delete('token');
+            $this->addToken($oldToken);
+        }
     }
 
-    private function setCacheLock ($lock) {
+    public function setCacheLock ($lock) {
         if ($lock === true) {
             Utils::getWorkflows()->write('1', 'cache.lock');
         } else {
@@ -62,7 +66,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
             $this->addTeam($auth);
             // If safe password is set, remove the unsafe one
             Utils::getWorkflows()->delete('token.'.$auth['team_id']);
-            $this->services[$auth['team_id']] = new SlackModel($auth['team_id']);
+            $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
         }
     }
 	
@@ -199,13 +203,9 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
 
     public function refreshCache () {
-        $this->setCacheLock(true);
-
         foreach ($this->services as $model) {
         	$model->refreshCache();
         }
-
-        $this->setCacheLock(false);
     }
 
     public function markChannelAsRead (\AlfredSlack\Models\ChannelModel $channel) {

@@ -248,35 +248,45 @@ class SingleTeamSlackService implements SlackServiceInterface {
 
         // Refresh auth
         Utils::getWorkflows()->delete('auth');
-        $this->getAuth();
+        $teamName = $this->getAuth()->team;
+        Utils::log("Auth refreshed for team $teamName");
 
         // Refresh channels
         Utils::getWorkflows()->delete('channels');
         $this->getChannels();
+        Utils::log("Channels refreshed for team $teamName");
         
         // Refresh groups
         Utils::getWorkflows()->delete('groups');
         $this->getGroups();
+        Utils::log("Groups refreshed for team $teamName");
         
         // Refresh user icons
         foreach ($this->getUsers() as $user) {
             Utils::getWorkflows()->delete('user.image.' . $user->getId());
-            $this->getProfileIcon($user);
         }
 
         // Refresh users
         Utils::getWorkflows()->delete('users');
-        $this->getUsers();
+        $users = $this->getUsers();
+        Utils::log("Users refreshed for team $teamName");
+
+        foreach ($users as $user) {
+            $this->getProfileIcon($user->getId());
+        }
+        Utils::log("Profile icons refreshed for team $teamName");
         
         // Refresh file icons
         foreach ($this->getFiles() as $file) {
             Utils::getWorkflows()->delete('file.image.' . $file->getId());
             $this->getFileIcon($file->getId());
         }
+        Utils::log("File icons refreshed for team $teamName");
         
         // Refresh ims
         Utils::getWorkflows()->delete('ims');
         $this->getIms();
+        Utils::log("Ims refreshed for team $teamName");
 
     }
 
