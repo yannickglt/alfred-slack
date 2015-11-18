@@ -26,6 +26,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
             $oldToken = Utils::getWorkflows()->getPassword('token');
             Utils::getWorkflows()->delete('token');
             $this->addToken($oldToken);
+            $this->refreshCache();
         }
     }
 

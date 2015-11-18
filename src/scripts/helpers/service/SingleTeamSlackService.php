@@ -217,10 +217,10 @@ class SingleTeamSlackService implements SlackServiceInterface {
     public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
 
         $id = $channel->getId();
-        if ($channel instanceof AlfredSlack\Models\UserModel) {
+        if ($channel instanceof \AlfredSlack\Models\UserModel) {
             $id = $this->getImByUser($channel)->getId();
         }
-
+        
         return $this->commander->execute('chat.postMessage', [
             'channel' => $id,
             'text' => $message,
