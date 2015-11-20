@@ -20,6 +20,10 @@ class Router {
 		return $this;
 	}
 
+	public static function getRoutes () {
+		return static::getInstance()->routes;
+	}
+
 	private static function getInstance () {
 		if (is_null(static::$_instance)) {
 			static::$_instance = new static();

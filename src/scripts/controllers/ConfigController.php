@@ -4,62 +4,39 @@ namespace AlfredSlack\Controllers;
 
 use AlfredSlack\Libs\Utils;
 use AlfredSlack\Libs\Route;
+use AlfredSlack\Libs\Router;
 use AlfredSlack\Helpers\Service\MultiTeamSlackService;
 
 class ConfigController extends SlackController {
 
-    public function listConfigsAction ($action, $param = null) {
+    private static function extractKeyword($subject) {
+        preg_match('/([^: ]*)/', $subject, $configName);
+        if (count($configName) === 2) {
+            return $configName[1];
+        } else {
+            return null;
+        }
+    }
+
+    public function listConfigsAction ($action) {
         
-        $results = [
-            [
-                'title' => '--token',
-                'description' => 'Set the Slack token in the keychain (recommended)',
-                'autocomplete' => '--token ',
-                'route' => new Route('config', 'saveToken', [ 'token' => $param ])
-            ],
-            [
-                'title' => '--token-unsafe',
-                'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
-                'autocomplete' => '--token-unsafe ',
-                'route' => new Route('config', 'saveTokenUnsafe', [ 'token' => $param ])
-            ],
-            [
-                'title' => '--mark',
-                'description' => 'Mark all as read',
-                'autocomplete' => '--mark ',
-                'route' => new Route('config', 'markAllAsRead')
-            ],
-            [
-                'title' => '--files',
-                'description' => 'List the files within the team',
-                'autocomplete' => '--files ',
-                'route' => new Route('config', 'getFiles', [ 'search' => $param ])
-            ],
-            [
-                'title' => '--search',
-                'description' => 'Search both messages and files',
-                'autocomplete' => '--search ',
-                'route' => new Route('config', 'search', [ 'search' => $param ])
-            ],
-            [
-                'title' => '--stars',
-                'description' => 'List the items starred',
-                'autocomplete' => '--stars ',
-                'route' => new Route('config', 'getStarredItems', [ 'search' => $param ])
-            ],
-            [
-                'title' => '--presence',
-                'description' => 'Set the user presence (either active or away)',
-                'autocomplete' => '--presence ',
-                'route' => new Route('config', 'listPresences', [ 'presence' => $param ])
-            ],
-            [
-                'title' => '--refresh',
-                'description' => 'Refresh the cache',
-                'autocomplete' => '--refresh ',
-                'route' => new Route('config', 'refreshCache')
-            ]
-        ];
+        $routes = Router::getRoutes();
+        $matchingRoutes = array_filter($routes, function ($route) {
+            $configName = static::extractKeyword($route['path']);
+            return (($configName !== null) && (strstr($configName, '--') !== false) && ($configName !== '--'));
+        });
+
+        $results = [];
+        foreach ($matchingRoutes as $route) {
+            $def = $route['definition'];
+            $path = static::extractKeyword($route['path']);
+            $results[] = [
+                'title' => $path,
+                'description' => !empty($def['description']) ? $def['description'] : null,
+                'autocomplete' => $path.' ',
+                'route' => new Route($def['controller'], $def['action'])
+            ];
+        }
 
         if (!empty($action)) {
             $this->results = $this->filterResults($results, $action);
