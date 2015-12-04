@@ -58,6 +58,10 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
 
     public function addToken ($token) {
+        if (empty($token)) {
+            return;
+        }
+        
     	$interactor = new MultiCurlInteractor;
         $interactor->setResponseFactory(new SlackResponseFactory);
         $tempCommander = new CustomCommander($token, $interactor);

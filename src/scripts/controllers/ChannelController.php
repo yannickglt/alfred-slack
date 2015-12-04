@@ -15,7 +15,7 @@ class ChannelController extends SlackController {
         foreach ($channels as $channel) {
             $results[] = [
                 'title' => '#'.$channel->getName(),
-                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'description' => $channel.'',
                 'autocomplete' => '#'.$channel->getName().' ',
                 'route' => new Route('channel', 'openChannel', [ 'channel' => $channel ])
             ];
@@ -25,7 +25,7 @@ class ChannelController extends SlackController {
         foreach ($groups as $group) {
             $results[] = [
                 'title' => '#'.$group->getName(),
-                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'description' => $group.'',
                 'autocomplete' => '#'.$group->getName().' ',
                 'route' => new Route('channel', 'openChannel', [ 'channel' => $group ])
             ];
@@ -36,7 +36,7 @@ class ChannelController extends SlackController {
             $icon = $this->service->getProfileIcon($user->getId());
             $results[] = [
                 'title' => '@'.$user->getName(),
-                'description' => 'User - ' . $user->getProfile()->real_name,
+                'description' => $user.'',
                 'icon' => $icon,
                 'autocomplete' => '@'.$user->getName().' ',
                 'route' => new Route('channel', 'openChannel', [ 'channel' => $user ])
@@ -65,7 +65,7 @@ class ChannelController extends SlackController {
             $results[] = [
                 'id' => $channel->getId(),
                 'title' => '#'.$channel->getName(),
-                'description' => 'Channel - ' . $channel->getNumMembers() . ' members - ' . ($channel->getIsMember() ? 'Already a member' : 'Not a member'),
+                'description' => $channel.'',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $channel ])
             ];
         }
@@ -75,7 +75,7 @@ class ChannelController extends SlackController {
             $results[] = [
                 'id' => $group->getId(),
                 'title' => '#'.$group->getName(),
-                'description' => 'Group - ' . count($group->getMembers()) . ' members',
+                'description' => $group.'',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $group ])
             ];
         }
@@ -85,7 +85,7 @@ class ChannelController extends SlackController {
             $results[] = [
                 'id' => $user->getId(),
                 'title' => '@'.$user->getName(),
-                'description' => 'User - ' . $user->profile->real_name,
+                'description' => $user.'',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $user ])
             ];
         }

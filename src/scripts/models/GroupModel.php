@@ -29,4 +29,8 @@ class GroupModel extends Model implements ChatInterface {
 		$this->auth = new AuthModel($this->auth);
 	}
 
+	public function __toString () {
+		$numberOfMembers = count($this->members);
+		return $this->auth->getTeam() . ' - Group - ' . ($numberOfMembers === 0 ? 'No' : $numberOfMembers) . ' members';
+	}
 }

@@ -31,4 +31,8 @@ class UserModel extends Model implements ChatInterface {
 		$this->auth = new AuthModel($this->auth);
 	}
 
+	public function __toString () {
+		return $this->auth->getTeam() . ' - User - ' . $this->profile->real_name;
+	}
+
 }

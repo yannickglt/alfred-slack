@@ -62,17 +62,17 @@ class SingleTeamSlackService implements SlackServiceInterface {
     }
 
     private function getAuth () {
-        $auth = Utils::getWorkflows()->read('auth');
+        $auth = Utils::getWorkflows()->read('auth.'.$this->teamId);
         if ($auth === false) {
             $auth = $this->commander->execute('auth.test')->getBody();
-            Utils::getWorkflows()->write($auth, 'auth');
-            $auth = Utils::getWorkflows()->read('auth');
+            Utils::getWorkflows()->write($auth, 'auth.'.$this->teamId);
+            $auth = Utils::getWorkflows()->read('auth.'.$this->teamId);
         }
         return $auth;
     }
 
     public function getChannels ($excludeArchived = false) {
-        $channels = Utils::getWorkflows()->read('channels');
+        $channels = Utils::getWorkflows()->read('channels.'.$this->teamId);
         if ($channels === false) {
             $params = [];
             if ($excludeArchived === true) {
@@ -83,14 +83,14 @@ class SingleTeamSlackService implements SlackServiceInterface {
             foreach ($channels as $index => $channel) {
                 $channels[$index] = Utils::extend($channel, [ 'auth' => $auth ]);
             }
-            Utils::getWorkflows()->write($channels, 'channels');
-            $channels = Utils::getWorkflows()->read('channels');
+            Utils::getWorkflows()->write($channels, 'channels.'.$this->teamId);
+            $channels = Utils::getWorkflows()->read('channels.'.$this->teamId);
         }
         return ModelFactory::getModels($channels, '\AlfredSlack\Models\ChannelModel');
     }
 
     public function getGroups ($excludeArchived = false) {
-        $groups = Utils::getWorkflows()->read('groups');
+        $groups = Utils::getWorkflows()->read('groups.'.$this->teamId);
         if ($groups === false) {
             $params = [];
             if ($excludeArchived === true) {
@@ -101,14 +101,14 @@ class SingleTeamSlackService implements SlackServiceInterface {
             foreach ($groups as $index => $group) {
                 $groups[$index] = Utils::extend($group, [ 'auth' => $auth ]);
             }
-            Utils::getWorkflows()->write($groups, 'groups');
-            $groups = Utils::getWorkflows()->read('groups');
+            Utils::getWorkflows()->write($groups, 'groups.'.$this->teamId);
+            $groups = Utils::getWorkflows()->read('groups.'.$this->teamId);
         }
         return ModelFactory::getModels($groups, '\AlfredSlack\Models\GroupModel');
     }
 
     public function getIms ($excludeDeleted = false) {
-        $ims = Utils::getWorkflows()->read('ims');
+        $ims = Utils::getWorkflows()->read('ims.'.$this->teamId);
         if ($ims === false) {
             $ims = $this->commander->execute('im.list')->getBody()['ims'];
             $auth = $this->getAuth();
@@ -118,8 +118,8 @@ class SingleTeamSlackService implements SlackServiceInterface {
             if ($excludeDeleted === true) {
                 $ims = Utils::filter($ims, [ 'is_user_deleted' => false ]);
             }
-            Utils::getWorkflows()->write($ims, 'ims');
-            $ims = Utils::getWorkflows()->read('ims');
+            Utils::getWorkflows()->write($ims, 'ims.'.$this->teamId);
+            $ims = Utils::getWorkflows()->read('ims.'.$this->teamId);
         }
         return ModelFactory::getModels($ims, '\AlfredSlack\Models\ImModel');
     }
@@ -133,15 +133,15 @@ class SingleTeamSlackService implements SlackServiceInterface {
     }
 
     public function getUsers ($excludeDeleted = false) {
-        $users = Utils::getWorkflows()->read('users');
+        $users = Utils::getWorkflows()->read('users.'.$this->teamId);
         if ($users === false) {
             $users = $this->commander->execute('users.list')->getBody()['members'];
             $auth = $this->getAuth();
             foreach ($users as $index => $user) {
                 $users[$index] = Utils::extend($user, [ 'auth' => $auth ]);
             }
-            Utils::getWorkflows()->write($users, 'users');
-            $users = Utils::getWorkflows()->read('users');
+            Utils::getWorkflows()->write($users, 'users.'.$this->teamId);
+            $users = Utils::getWorkflows()->read('users.'.$this->teamId);
         }
         if ($excludeDeleted === true) {
             $users = Utils::filter($users, [ 'deleted' => false ]);
@@ -150,11 +150,11 @@ class SingleTeamSlackService implements SlackServiceInterface {
     }
 
     public function getFiles () {
-        $files = Utils::getWorkflows()->read('files');
+        $files = Utils::getWorkflows()->read('files.'.$this->teamId);
         if ($files === false) {
             $files = $this->commander->execute('files.list')->getBody()['files'];
-            Utils::getWorkflows()->write($files, 'files');
-            $files = Utils::getWorkflows()->read('files');
+            Utils::getWorkflows()->write($files, 'files.'.$this->teamId);
+            $files = Utils::getWorkflows()->read('files.'.$this->teamId);
         }
         return ModelFactory::getModels($files, '\AlfredSlack\Models\FileModel');
     }
@@ -164,11 +164,11 @@ class SingleTeamSlackService implements SlackServiceInterface {
     }
 
     public function getStarredItems () {
-        $stars = Utils::getWorkflows()->read('stars');
+        $stars = Utils::getWorkflows()->read('stars.'.$this->teamId);
         if ($stars === false) {
             $stars = $this->commander->execute('stars.list')->getBody()['items'];
-            Utils::getWorkflows()->write($stars, 'stars');
-            $stars = Utils::getWorkflows()->read('stars');
+            Utils::getWorkflows()->write($stars, 'stars.'.$this->teamId);
+            $stars = Utils::getWorkflows()->read('stars.'.$this->teamId);
         }
         return array_map(function ($star) {
             switch ($star->type) {
@@ -247,17 +247,17 @@ class SingleTeamSlackService implements SlackServiceInterface {
     public function refreshCache () {
 
         // Refresh auth
-        Utils::getWorkflows()->delete('auth');
+        Utils::getWorkflows()->delete('auth.'.$this->teamId);
         $teamName = $this->getAuth()->team;
         Utils::log("Auth refreshed for team $teamName");
 
         // Refresh channels
-        Utils::getWorkflows()->delete('channels');
+        Utils::getWorkflows()->delete('channels.'.$this->teamId);
         $this->getChannels();
         Utils::log("Channels refreshed for team $teamName");
         
         // Refresh groups
-        Utils::getWorkflows()->delete('groups');
+        Utils::getWorkflows()->delete('groups.'.$this->teamId);
         $this->getGroups();
         Utils::log("Groups refreshed for team $teamName");
         
@@ -267,7 +267,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
         }
 
         // Refresh users
-        Utils::getWorkflows()->delete('users');
+        Utils::getWorkflows()->delete('users.'.$this->teamId);
         $users = $this->getUsers();
         Utils::log("Users refreshed for team $teamName");
 
@@ -284,7 +284,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
         Utils::log("File icons refreshed for team $teamName");
         
         // Refresh ims
-        Utils::getWorkflows()->delete('ims');
+        Utils::getWorkflows()->delete('ims.'.$this->teamId);
         $this->getIms();
         Utils::log("Ims refreshed for team $teamName");
 

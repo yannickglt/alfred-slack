@@ -30,4 +30,8 @@ class ChannelModel extends Model implements ChatInterface {
 		$this->auth = new AuthModel($this->auth);
 	}
 
+	public function __toString () {
+		return $this->auth->getTeam() . ' - Channel - ' . ($this->num_members === 0 ? 'No' : $this->num_members) . ' members - ' . ($this->is_member ? 'Already a member' : 'Not a member');
+	}
+
 }

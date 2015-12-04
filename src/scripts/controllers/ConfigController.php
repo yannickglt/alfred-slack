@@ -18,6 +18,18 @@ class ConfigController extends SlackController {
                 'route' => new Route('config', 'saveToken', [ 'token' => $param ])
             ],
             [
+                'title' => '--add-token',
+                'description' => 'Add a Slack token in the keychain (recommended)',
+                'autocomplete' => '--add-token ',
+                'route' => new Route('config', 'saveToken', [ 'token' => $param ])
+            ],
+            [
+                'title' => '--add-token-unsafe',
+                'description' => 'Add a Slack token in the cache instead of the keychain (not recommended)',
+                'autocomplete' => '--add-token-unsafe ',
+                'route' => new Route('config', 'saveTokenUnsafe', [ 'token' => $param ])
+            ],
+            [
                 'title' => '--token-unsafe',
                 'description' => 'Set the Slack token in the cache instead of the keychain (not recommended)',
                 'autocomplete' => '--token-unsafe ',
