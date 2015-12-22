@@ -40,7 +40,8 @@ class Controller {
             $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
             $route = isset($result['route']) ? json_encode($result['route']) : null;
             $autocomplete = isset($result['autocomplete']) ? $result['autocomplete'] : null;
-            $this->workflows->result($i++, $route, $result['title'], $result['description'], $icon, 'yes', $autocomplete);
+            $description = isset($result['description']) ? $result['description'] : null;
+            $this->workflows->result($i++, $route, $result['title'], $description, $icon, 'yes', $autocomplete);
         }
 
         $this->isRendered = true;
@@ -58,19 +59,58 @@ class Controller {
         echo $message;
     }
 
-    protected function filterResults ($array, $search) {
+    protected function deduplicateChannels (array $results) {
+        $resultsByAutocomplete = Utils::groupBy($results, 'autocomplete');
+        $resultsByAutocomplete = Utils::filter($resultsByAutocomplete, function ($v) {
+            return count($v) > 1;
+        });
+
+        $autocompletes = [];
+        foreach ($resultsByAutocomplete as $res) {
+            foreach ($res as $result) {
+                $autocompletes[] = $result['autocomplete'];
+            }
+        }
+
+        foreach ($results as &$result) {
+            if (in_array($result['autocomplete'], $autocompletes)) {
+                $channel = $result['route']->getParams()['channel'];
+                $autocomplete = $channel->getAuth()->getTeam();
+                $autocomplete .= ($channel instanceof \AlfredSlack\Models\UserModel) ? '@' : '#';
+                $autocomplete .= $channel->getName() . ' ';
+                $result['autocomplete'] = $autocomplete;
+            }
+        }
+
+        return $results;
+    }
+
+    protected function filterResults (array $array, $search) {
         $search = strtolower(trim($search));
         $found = [];
         $results = [];
         foreach ($array as $id => $element) {
             
             $title = strtolower(trim($element['title']));
+            $autocomplete = strtolower(trim($element['autocomplete']));
             $description = strtolower(trim($element['description']));
 
-            if ($title === $search) {
+            if ($autocomplete === $search) {
                 if (!isset($found[$id])) {
                     $found[$id] = true;
                     $results[0][] = $element;
+                }
+            }
+            else if ($title === $search) {
+                if (!isset($found[$id])) {
+                    $found[$id] = true;
+                    $results[0][] = $element;
+                }
+            }
+            else if (strpos($autocomplete, $search) === 0) {
+                if (!isset($found[$id])) {
+                    $found[$id] = true;
+                    $results[1][] = $element;
                 }
             }
             else if (strpos($title, $search) === 0) {
@@ -83,6 +123,13 @@ class Controller {
                 if (!isset($found[$id])) {
                     $found[$id] = true;
                     $element['__searchIndex'] = strpos($title, $search);
+                    $results[2][] = $element;
+                }
+            }
+            else if (strpos($autocomplete, $search) > 0) {
+                if (!isset($found[$id])) {
+                    $found[$id] = true;
+                    $element['__searchIndex'] = strpos($autocomplete, $search);
                     $results[2][] = $element;
                 }
             }

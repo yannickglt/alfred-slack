@@ -47,8 +47,35 @@ class Utils {
 		return;
 	}
 
+	public static function pluck ($collection, $prop) {
+		return array_map(function ($v) use ($prop) {
+			return $v[$prop];
+		}, $collection);
+	}
+
 	public static function filter ($array, $predicate) {
 		return array_values(array_filter($array, static::matches($predicate)));
+	}
+
+	public static function groupBy ($collection=null, $iterator=null) {
+		$result = [];
+		$collection = (array) $collection;
+		foreach ($collection as $k => $v) {
+			$key = is_callable($iterator) ? $iterator($v, $k) : $v[$iterator];
+			if (!array_key_exists($key, $result)) {
+				$result[$key] = [];
+			}
+			$result[$key][] = $v;
+		}
+		return $result;
+	}
+
+	public static function flatten (array $array) {
+	    $return = [];
+	    array_walk_recursive($array, function($a, $k) use (&$return) {
+	    	$return[] = $a;
+	    });
+	    return $return;
 	}
 	
 	public static function toArray ($d) {

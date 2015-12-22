@@ -43,7 +43,9 @@ class ChannelController extends SlackController {
             ];
         }
 
-        $this->results = $this->filterResults($results, $search);
+        $this->results = $this->deduplicateChannels($results);
+
+        $this->results = $this->filterResults($this->results, $search);
 
         if (!empty($message) && (count($this->results) > 0)) {
             $firstResult = $this->results[0];
@@ -66,6 +68,7 @@ class ChannelController extends SlackController {
                 'id' => $channel->getId(),
                 'title' => '#'.$channel->getName(),
                 'description' => $channel.'',
+                'autocomplete' => '#'.$channel->getName().' ',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $channel ])
             ];
         }
@@ -76,6 +79,7 @@ class ChannelController extends SlackController {
                 'id' => $group->getId(),
                 'title' => '#'.$group->getName(),
                 'description' => $group.'',
+                'autocomplete' => '#'.$group->getName().' ',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $group ])
             ];
         }
@@ -86,9 +90,12 @@ class ChannelController extends SlackController {
                 'id' => $user->getId(),
                 'title' => '@'.$user->getName(),
                 'description' => $user.'',
+                'autocomplete' => '@'.$user->getName().' ',
                 'route' => new Route('channel', 'getChannelHistory', [ 'channel' => $user ])
             ];
         }
+
+        $results = $this->deduplicateChannels($results);
 
         $results = $this->filterResults($results, $search);
 
@@ -116,16 +123,25 @@ class ChannelController extends SlackController {
             $this->service->markImAsRead($im);
         }
 
-        foreach ($history as $message) {
-            $date = new \DateTime();
-            $date->setTimestamp($message->getTs());
+        if (empty($history)) {
             $this->results[] = [
-                'title' => $message->getText(),
-                'description' => $date->format('F jS - H:i'),
+                'title' => 'No history',
                 'icon' => $icon,
                 'autocomplete' => $firstResult['title'].' ',
                 'route' => $firstResult['route']
             ];
+        } else {
+            foreach ($history as $message) {
+                $date = new \DateTime();
+                $date->setTimestamp($message->getTs());
+                $this->results[] = [
+                    'title' => $message->getText(),
+                    'description' => $date->format('F jS - H:i'),
+                    'icon' => $icon,
+                    'autocomplete' => $firstResult['title'].' ',
+                    'route' => $firstResult['route']
+                ];
+            }
         }
 
         $this->render();
