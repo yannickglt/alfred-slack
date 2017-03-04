@@ -39,8 +39,8 @@ class Workflows {
 			$this->bundle = $bundleid;
 		endif;
 
-		$this->cache = $this->home. "/Library/Caches/com.runningwithcrayons.Alfred-2/Workflow Data/".$this->bundle;
-		$this->data  = $this->home. "/Library/Application Support/Alfred 2/Workflow Data/".$this->bundle;
+		$this->cache = $this->home. "/Library/Caches/com.runningwithcrayons.Alfred-3/Workflow Data/".$this->bundle;
+		$this->data  = $this->home. "/Library/Application Support/Alfred 3/Workflow Data/".$this->bundle;
 
 		if ( !file_exists( $this->cache ) ):
 			exec("mkdir '".$this->cache."'");
@@ -369,7 +369,7 @@ class Workflows {
 		exec('mdfind "'.$query.'"', $results);
 		return $results;
 	}
-	
+
 	public function delete( $a )
 	{
 		if ( file_exists( $a ) ):
@@ -382,7 +382,7 @@ class Workflows {
 			unlink($this->cache."/".$a);
 		endif;
 	}
-	
+
 	/**
 	* Description:
 	* Accepts data and a string file name to store data to local file as cache
@@ -438,7 +438,7 @@ class Workflows {
 		else:
 			return false;
 		endif;
-		
+
 		$out = file_get_contents( $a );
 		if ( !is_null( json_decode( $out ) ) ):
 			$out = json_decode( $out );
@@ -468,10 +468,10 @@ class Workflows {
 		else:
 			return false;
 		endif;
-		
+
 		return $a;
 	}
-	
+
 	public function filetime( $a )
 	{
 		if ( file_exists( $a ) ):
@@ -483,7 +483,7 @@ class Workflows {
 		elseif ( file_exists( $this->cache."/".$a ) ):
 			return filemtime($this->cache.'/'.$a);
 		endif;
-		
+
 		return false;
 	}
 
@@ -513,7 +513,7 @@ class Workflows {
 			'autocomplete' => $auto,
 			'type' => $type
 		);
-		
+
 		if ( is_null( $type ) ):
 			unset( $temp['type'] );
 		endif;
@@ -525,7 +525,7 @@ class Workflows {
 
 	/**
 	 * Return a password set previously in the system keychain
-	 * Status may equal 44 if no password is defined for this service and this account 
+	 * Status may equal 44 if no password is defined for this service and this account
 	 * @param $account - the name of the account the password is for
 	 * @param $service - the name of the service, by default it equals the bundle id
 	 * @param string - the password
@@ -537,13 +537,13 @@ class Workflows {
 		endif;
 
         $password = exec("security 2>&1 find-generic-password -s $service -a $account -w", $output, $status);
-        
+
         return ($status === 0) ? $password : null;
 	}
 
 	/**
 	 * Store a password in the system keychain
-	 * Status may equal 45 if a password is already defined for this service and this account 
+	 * Status may equal 45 if a password is already defined for this service and this account
 	 * @param $account - the name of the account the password is for
 	 * @param $password - the password to set
 	 * @param $service - the name of the service, by default it equals the bundle id
