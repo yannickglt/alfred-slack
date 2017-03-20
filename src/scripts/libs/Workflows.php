@@ -40,14 +40,14 @@ class Workflows {
 		endif;
 
 		$this->cache = $this->home. (
-			"/Library/Caches/com.runningwithcrayons.Alfred-3/Workflow Data/" 
+			file_exists("/Library/Caches/com.runningwithcrayons.Alfred-3/Workflow Data/") 
 			?
 			"/Library/Caches/com.runningwithcrayons.Alfred-3/Workflow Data/".$this->bundle 
 			: 
 			"/Library/Caches/com.runningwithcrayons.Alfred-2/Workflow Data/".$this->bundle
 		);
 		$this->data  = $this->home. (
-			"/Library/Application Support/Alfred 3/Workflow Data/"
+			file_exists("/Library/Application Support/Alfred 3/Workflow Data/")
 			?
 			"/Library/Application Support/Alfred 3/Workflow Data/".$this->bundle
 			:
