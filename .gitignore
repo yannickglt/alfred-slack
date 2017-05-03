@@ -3,3 +3,4 @@ src/.idea
 .idea
 Slack.alfredworkflow
 .DS_Store
+src/cache/
