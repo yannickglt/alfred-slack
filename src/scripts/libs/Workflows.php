@@ -563,12 +563,12 @@ class Workflows {
 			$service = $this->bundle;
 		endif;
 
-        exec("security 2>&1 add-generic-password -s $service -a $account -w $password", $output, $status);
+        exec("security 2>&1 add-generic-password -s \"$service\" -a \"$account\" -w \"$password\"", $output, $status);
 
         // If the password is already set, we override it
         if ( $status === 45 ):
-        	exec("security 2>&1 delete-generic-password -s $service -a $account");
-        	exec("security 2>&1 add-generic-password -s $service -a $account -w $password", $output, $status);
+        	exec("security 2>&1 delete-generic-password -s \"$service\" -a \"$account\"");
+        	exec("security 2>&1 add-generic-password -s \"$service\" -a \"$account\" -w \"$password\"", $output, $status);
         endif;
 
         return ($status === 0);
