@@ -1,7 +1,27 @@
 (function (window) {
 
   var REDIRECT_URI = 'http://yannickglt.github.io/alfred-slack/';
-  var OAUTH_URL = '//__TEAM__.slack.com/oauth?client_id=__CLIENT_ID__&scope=channels%3Ahistory+channels%3Awrite+channels%3Aread+groups%3Ahistory+groups%3Aread+groups%3Awrite+files%3Aread+files%3Awrite%3Auser+im%3Ahistory+im%3Aread+im%3Awrite+search%3Aread+stars%3Aread+team%3Aread+users%3Aread+users%3Awrite&team=1&redirect_uri=__REDIRECT_URI__';
+  var SCOPE = [
+    'channels:history',
+    'channels:write',
+    'channels:read',
+    'chat:write:bot',
+    'chat:write:user',
+    'groups:history',
+    'groups:read',
+    'groups:write',
+    'files:read',
+    'files:write:user',
+    'im:history',
+    'im:read',
+    'im:write',
+    'search:read',
+    'stars:read',
+    'team:read',
+    'users:read',
+    'users:write'
+  ];
+  var OAUTH_URL = '//__TEAM__.slack.com/oauth?client_id=__CLIENT_ID__&scope=__SCOPE__&team=1&redirect_uri=__REDIRECT_URI__';
 
   window.addEventListener('load', function () {
 
@@ -37,7 +57,8 @@
     var team = document.getElementById('team').value.toLowerCase();
     var clientId = document.getElementById('client_id').value;
     var redirectUrl = encodeURIComponent(REDIRECT_URI + '?client_id=' + clientId);
-    var url = OAUTH_URL.replace(/__TEAM__/g, team).replace(/__CLIENT_ID__/g, clientId).replace(/__REDIRECT_URI__/g, redirectUrl);
+    var scope = encodeURIComponent(SCOPE.join(' '));
+    var url = OAUTH_URL.replace(/__TEAM__/g, team).replace(/__CLIENT_ID__/g, clientId).replace(/__REDIRECT_URI__/g, redirectUrl).replace(/__SCOPE__/g, scope);
     window.open(url, '_self');
   }
 
