@@ -71,6 +71,8 @@
 			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
@@ -88,14 +90,12 @@
 				<key>runningsubtext</key>
 				<string>Loading...</string>
 				<key>script</key>
-				<string>&lt;?php
-
-//$query = "{query}";
+				<string>$query = "{query}";
 $input = true;
 require_once 'scripts/index.php';
 </string>
 				<key>scriptargtype</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
@@ -122,11 +122,11 @@ require_once 'scripts/index.php';
 				<key>escaping</key>
 				<integer>68</integer>
 				<key>script</key>
-				<string>&lt;?php 
-$input = false;
+				<string>$input = false;
+$query = "{query}";
 require_once 'scripts/index.php';</string>
 				<key>scriptargtype</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>

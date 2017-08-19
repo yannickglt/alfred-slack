@@ -124,7 +124,7 @@ class ConfigController extends SlackController {
       $this->results = $this->filterResults($results, $search);
     }
 
-    $this->render();
+    $this->render(false);
   }
 
   public function getStarredItemsAction($search) {
@@ -161,7 +161,7 @@ class ConfigController extends SlackController {
       $this->results = $this->filterResults($results, $search);
     }
 
-    $this->render();
+    $this->render(false);
   }
 
   public function searchAction($query) {
@@ -191,7 +191,7 @@ class ConfigController extends SlackController {
     }
     $this->results = $results;
 
-    $this->render();
+    $this->render(false);
   }
 
   public function openFileAction($file) {

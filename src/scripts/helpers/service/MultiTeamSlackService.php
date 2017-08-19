@@ -67,11 +67,13 @@ class MultiTeamSlackService implements SlackServiceInterface {
 
     list($clientIdAndCode, $clientSecret) = explode(':', $clientCredentials);
     list($clientId, $code) = explode('|', $clientIdAndCode);
+    Utils::debug("client ID: $clientId, code: $code, secret: $clientSecret");
 
     $interactor = new MultiCurlInteractor;
     $interactor->setResponseFactory(new SlackResponseFactory);
     $tempCommander = new CustomCommander(false, $interactor);
     $access = $tempCommander->execute('oauth.access', [ 'client_id' => $clientId, 'client_secret' => $clientSecret, 'code' => $code, 'redirect_uri' => static::$redirectUri . '?client_id=' . $clientId ])->getBody();
+    Utils::debug('access: ' . json_encode($access));
     $token = $access['access_token'];
     $tempCommander->setToken($token);
     $auth = $tempCommander->execute('auth.test')->getBody();

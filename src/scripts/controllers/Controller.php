@@ -28,18 +28,19 @@ class Controller {
 
   }
 
-  protected function render() {
+  protected function render($sorted = true) {
     if ($this->isNotified) {
       throw new Exception('Cannot use the method "render" if the method "notify" was called');
     }
 
     $i = 0;
     foreach ($this->results as $result) {
+      $uid = $sorted ? $i++ : null;
       $icon = isset($result['icon']) ? $result['icon'] : Utils::$icon;
       $route = isset($result['route']) ? json_encode($result['route']) : null;
       $autocomplete = isset($result['autocomplete']) ? $result['autocomplete'] : null;
       $description = isset($result['description']) ? $result['description'] : null;
-      $this->workflows->result($i++, $route, $result['title'], $description, $icon, 'yes', $autocomplete);
+      $this->workflows->result($uid, $route, $result['title'], $description, $icon, 'yes', $autocomplete);
     }
 
     $this->isRendered = true;

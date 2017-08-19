@@ -142,7 +142,7 @@ class ChannelController extends SlackController {
       }
     }
 
-    $this->render();
+    $this->render(false);
   }
 
   public function openChannelAction(\AlfredSlack\Models\ChatInterface $channel) {
