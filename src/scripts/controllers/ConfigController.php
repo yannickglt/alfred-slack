@@ -199,8 +199,12 @@ class ConfigController extends SlackController {
   }
 
   public function saveClientAction($clientCredentials) {
-    $this->service->addClient($clientCredentials);
-    $this->notify('Client saved successfully');
+    try {
+      $this->service->addClient($clientCredentials);
+      $this->notify('Client saved successfully');
+    } catch (\Exception $e) {
+      $this->notify($e->getMessage());
+    }
   }
 
   public function saveTokenAction($token) {

@@ -44,12 +44,14 @@ class Workflows {
     } else {
       $this->cache = $this->home . "/Library/Caches/com.runningwithcrayons.Alfred-2/Workflow Data/" . $this->bundle;
     }
+    error_log("Cache folder: $this->cache");
 
     if (isset($_SERVER['alfred_workflow_data'])) {
       $this->data = $_SERVER['alfred_workflow_data'];
     } else {
       $this->data = $this->home . "/Library/Application Support/Alfred 2/Workflow Data/" . $this->bundle;
     }
+    error_log("Data folder: $this->data");
 
 		if ( !file_exists( $this->cache ) ):
 			exec("mkdir '".$this->cache."'");

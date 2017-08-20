@@ -61,29 +61,29 @@ class MultiTeamSlackService implements SlackServiceInterface {
   }
 
   public function addClient($clientCredentials) {
-    if (empty($clientCredentials)) {
-      return;
-    }
-
-    list($clientIdAndCode, $clientSecret) = explode(':', $clientCredentials);
-    list($clientId, $code) = explode('|', $clientIdAndCode);
-    Utils::debug("client ID: $clientId, code: $code, secret: $clientSecret");
+    list($clientSecret, $clientId, $code) = $this->parseClientCredentials($clientCredentials);
 
     $interactor = new MultiCurlInteractor;
     $interactor->setResponseFactory(new SlackResponseFactory);
     $tempCommander = new CustomCommander(false, $interactor);
-    $access = $tempCommander->execute('oauth.access', [ 'client_id' => $clientId, 'client_secret' => $clientSecret, 'code' => $code, 'redirect_uri' => static::$redirectUri . '?client_id=' . $clientId ])->getBody();
+    $access = $tempCommander->execute('oauth.access', ['client_id' => $clientId, 'client_secret' => $clientSecret, 'code' => $code, 'redirect_uri' => static::$redirectUri . '?client_id=' . $clientId])->getBody();
     Utils::debug('access: ' . json_encode($access));
-    $token = $access['access_token'];
-    $tempCommander->setToken($token);
-    $auth = $tempCommander->execute('auth.test')->getBody();
-    $isClientCredentialsSaved = Utils::getWorkflows()->setPassword('clientCredentials.' . $auth['team_id'], $clientCredentials);
-    $isTokenSaved = Utils::getWorkflows()->setPassword('token.' . $auth['team_id'], $token);
-    if ($isClientCredentialsSaved && $isTokenSaved) {
-      $this->addTeam($auth);
-      // If safe password is set, remove the unsafe one
-      Utils::getWorkflows()->delete('token.' . $auth['team_id']);
-      $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
+
+    if ($access['ok'] === false) {
+      $message = $this->getErrorMessage($access['error']);
+      throw new \Exception($message);
+    } else {
+      $token = $access['access_token'];
+      $tempCommander->setToken($token);
+      $auth = $tempCommander->execute('auth.test')->getBody();
+      $isClientCredentialsSaved = Utils::getWorkflows()->setPassword('clientCredentials.' . $auth['team_id'], $clientCredentials);
+      $isTokenSaved = Utils::getWorkflows()->setPassword('token.' . $auth['team_id'], $token);
+      if ($isClientCredentialsSaved && $isTokenSaved) {
+        $this->addTeam($auth);
+        // If safe password is set, remove the unsafe one
+        Utils::getWorkflows()->delete('token.' . $auth['team_id']);
+        $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
+      }
     }
   }
 
@@ -261,6 +261,46 @@ class MultiTeamSlackService implements SlackServiceInterface {
     foreach ($this->services as $model) {
       $model->markAllAsRead();
     }
+  }
+
+  private function parseClientCredentials($clientCredentials) {
+    if (empty($clientCredentials)) {
+      throw new \Exception('Missing client credentials');
+    }
+
+    list($clientIdAndCode, $clientSecret) = explode(':', $clientCredentials);
+    list($clientId, $code) = explode('|', $clientIdAndCode);
+
+    if (empty($clientId)) {
+      throw new \Exception('Missing client ID. Please check the generated unique code.');
+    } else if (strlen($clientId) !== 23) {
+      throw new \Exception('Invalid client ID. Please check the generated unique code.');
+    }
+
+    if (empty($code)) {
+      throw new \Exception('Missing OAUTH unique code. Please check the generated unique code.');
+    } else if (strlen($code) !== 88) {
+      throw new \Exception('Invalid OAUTH unique code. Please check the generated unique code.');
+    }
+
+    if (empty($clientSecret)) {
+      throw new \Exception('Missing client secret. Please check the generated unique code.');
+    } else if (strlen($clientSecret) !== 32) {
+      throw new \Exception('Invalid client secret. Please check the generated unique code.');
+    }
+
+    Utils::debug("client ID: $clientId, code: $code, secret: $clientSecret");
+
+    return [$clientSecret, $clientId, $code];
+  }
+
+  private function getErrorMessage($errorCode) {
+    $message = $errorCode;
+    switch ($errorCode) {
+      case 'code_already_used':
+        $message = 'The unique code was already used.';
+    }
+    return $message;
   }
 
 }
