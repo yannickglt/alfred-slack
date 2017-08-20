@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="//fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Alfred Slack Workflow</h1>
+      <div class="images">
+        <img class="image-slack" src="assets/img/slack.png">
+        <img class="image-alfred" src="assets/img/alfred.png">
+      </div>
+      <div id="step-1" class="step">
+        <input id="team" value="" type="text" placeholder="Team">
+        <input id="client_id" value="" type="text" placeholder="Client ID">
+        <button class="btn" onclick="alfredSlack.generateCode()">Generate code</button>
+      </div>
+      <div id="step-2" class="step">
+        <p class="help">Copy the code below and add it to your client ID and secret.</p>
+        <div class="input">
+          <input id="code" value="" type="text">
+        </div>
+        <button class="btn" id="code-btn" data-clipboard-target="#code">Copy to clipboard</button>
+      </div>
+    </div>
+    <div class="github-buttons">
+      <p class="credits">Made with ♥ by Yannick Galatol</p>
+      <iframe src="https://ghbtns.com/github-btn.html?user=yannickglt&repo=alfred-slack&type=star&count=true&size=large"
+              frameborder="0"
+              scrolling="0"
+              width="135px"
+              height="30px"></iframe>
+      <iframe src="https://ghbtns.com/github-btn.html?user=yannickglt&repo=alfred-slack&type=fork&count=true&size=large"
+              frameborder="0"
+              scrolling="0"
+              width="120px"
+              height="30px"></iframe>
+      <iframe src="https://ghbtns.com/github-btn.html?user=yannickglt&type=follow&count=true&size=large"
+              frameborder="0"
+              scrolling="0"
+              width="195px"
+              height="30px"></iframe>
+    </div>
+
+    <script async defer src="//buttons.github.io/buttons.js"></script>
+    <script async src="//cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.0/clipboard.min.js"></script>
+    <script async src="assets/script.js"></script>
+  </body>
+</html>

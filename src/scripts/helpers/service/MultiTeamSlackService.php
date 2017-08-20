@@ -1,4 +1,5 @@
 <?php
+
 namespace AlfredSlack\Helpers\Service;
 
 use AlfredSlack\Libs\Utils;
@@ -10,231 +11,296 @@ use Frlnc\Slack\Http\SlackResponseFactory;
 
 class MultiTeamSlackService implements SlackServiceInterface {
 
-    private $services = [];
+  private static $redirectUri = 'http://yannickglt.github.io/alfred-slack/';
 
-	public function __construct () {
-        $this->initServices();
-	}
+  private $services = [];
 
-    private function initServices () {
-        $teams = $this->getTeams();
-        if ($teams !== false) {
-        	foreach ($teams as $team) {
-	        	$this->services[$team->team_id] = new SingleTeamSlackService($team->team_id);
-	        }
-	    } else {
-            $oldToken = Utils::getWorkflows()->getPassword('token');
-            Utils::getWorkflows()->delete('token');
-            $this->addToken($oldToken);
-            $this->refreshCache();
-        }
+  public function __construct() {
+    $this->initServices();
+  }
+
+  private function initServices() {
+    $teams = $this->getTeams();
+    if ($teams !== false) {
+      foreach ($teams as $team) {
+        $this->services[$team->team_id] = new SingleTeamSlackService($team->team_id);
+      }
+    } else {
+      $oldToken = Utils::getWorkflows()->getPassword('token');
+      Utils::getWorkflows()->delete('token');
+      $this->addToken($oldToken);
+      $this->refreshCache();
+    }
+  }
+
+  public function setCacheLock($lock) {
+    if ($lock === true) {
+      Utils::getWorkflows()->write('1', 'cache.lock');
+    } else {
+      Utils::getWorkflows()->delete('cache.lock');
+    }
+  }
+
+  public function isCacheLocked() {
+    return (Utils::getWorkflows()->read('cache.lock') === 1);
+  }
+
+  public function getTeams() {
+    return Utils::getWorkflows()->read('teams');
+  }
+
+  public function addTeam($team) {
+    $teams = Utils::getWorkflows()->read('teams');
+    if ($teams === false) {
+      $teams = [];
+    }
+    if (is_null(Utils::find($teams, ['team_id' => $team['team_id']]))) {
+      $teams[] = ['team' => $team['team'], 'team_id' => $team['team_id']];
+      Utils::getWorkflows()->write($teams, 'teams');
+    }
+  }
+
+  public function addClient($clientCredentials) {
+    list($clientSecret, $clientId, $code) = $this->parseClientCredentials($clientCredentials);
+
+    $interactor = new MultiCurlInteractor;
+    $interactor->setResponseFactory(new SlackResponseFactory);
+    $tempCommander = new CustomCommander(false, $interactor);
+    $access = $tempCommander->execute('oauth.access', ['client_id' => $clientId, 'client_secret' => $clientSecret, 'code' => $code, 'redirect_uri' => static::$redirectUri . '?client_id=' . $clientId])->getBody();
+    Utils::debug('access: ' . json_encode($access));
+
+    if ($access['ok'] === false) {
+      $message = $this->getErrorMessage($access['error']);
+      throw new \Exception($message);
+    } else {
+      $token = $access['access_token'];
+      $tempCommander->setToken($token);
+      $auth = $tempCommander->execute('auth.test')->getBody();
+      $isClientCredentialsSaved = Utils::getWorkflows()->setPassword('clientCredentials.' . $auth['team_id'], $clientCredentials);
+      $isTokenSaved = Utils::getWorkflows()->setPassword('token.' . $auth['team_id'], $token);
+      if ($isClientCredentialsSaved && $isTokenSaved) {
+        $this->addTeam($auth);
+        // If safe password is set, remove the unsafe one
+        Utils::getWorkflows()->delete('token.' . $auth['team_id']);
+        $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
+      }
+    }
+  }
+
+  public function addToken($token) {
+    if (empty($token)) {
+      return;
     }
 
-    public function setCacheLock ($lock) {
-        if ($lock === true) {
-            Utils::getWorkflows()->write('1', 'cache.lock');
-        } else {
-            Utils::getWorkflows()->delete('cache.lock');
-        }
+    $interactor = new MultiCurlInteractor;
+    $interactor->setResponseFactory(new SlackResponseFactory);
+    $tempCommander = new CustomCommander($token, $interactor);
+    $auth = $tempCommander->execute('auth.test')->getBody();
+
+    if (Utils::getWorkflows()->setPassword('token.' . $auth['team_id'], $token)) {
+      $this->addTeam($auth);
+      // If safe password is set, remove the unsafe one
+      Utils::getWorkflows()->delete('token.' . $auth['team_id']);
+      $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
+    }
+  }
+
+  public function addTokenUnsafe($token) {
+  }
+
+  public function getProfileIcon($userId) {
+    foreach ($this->services as $model) {
+      $icon = $model->getProfileIcon($userId);
+      if ($icon !== false) {
+        return $icon;
+      }
+    }
+    return false;
+  }
+
+  public function getFileIcon($fileId) {
+    foreach ($this->services as $model) {
+      $icon = $model->getFileIcon($fileId);
+      if ($icon !== false) {
+        return $icon;
+      }
+    }
+    return false;
+  }
+
+  public function getChannels($excludeArchived = false) {
+    $channels = [];
+    foreach ($this->services as $model) {
+      $channels = array_merge($channels, $model->getChannels($excludeArchived));
+    }
+    return $channels;
+  }
+
+  public function getGroups($excludeArchived = false) {
+    $groups = [];
+    foreach ($this->services as $model) {
+      $groups = array_merge($groups, $model->getGroups($excludeArchived));
+    }
+    return $groups;
+  }
+
+  public function getIms($excludeDeleted = false) {
+    $ims = [];
+    foreach ($this->services as $model) {
+      $ims = array_merge($ims, $model->getIms($excludeDeleted));
+    }
+    return $ims;
+  }
+
+  public function openIm(\AlfredSlack\Models\UserModel $user) {
+    $teamId = $user->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $user->openIm($user);
+  }
+
+  public function getUsers($excludeDeleted = false) {
+    $users = [];
+    foreach ($this->services as $model) {
+      $users = array_merge($users, $model->getUsers($excludeDeleted));
+    }
+    return $users;
+  }
+
+  public function getFiles() {
+    $files = [];
+    foreach ($this->services as $model) {
+      $files = array_merge($files, $model->getFiles());
+    }
+    return $files;
+  }
+
+  public function getFile(\AlfredSlack\Models\FileModel $file) {
+    $teamId = $file->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $model->getFile($file);
+  }
+
+  public function getStarredItems() {
+    $stars = [];
+    foreach ($this->services as $model) {
+      $stars = array_merge($stars, $model->getStarredItems());
+    }
+    return $stars;
+  }
+
+  public function search($query) {
+    $res = [];
+    foreach ($this->services as $model) {
+      $search = $model->search($query);
+      $res = $res + $search;
+    }
+    return $res;
+  }
+
+  public function getImByUser(\AlfredSlack\Models\UserModel $user) {
+    $teamId = $user->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $model->getImByUser($user);
+  }
+
+  public function setPresence($isAway = false) {
+    foreach ($this->services as $model) {
+      $model->setPresence($isAway);
+    }
+  }
+
+  public function postMessage(\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
+    $teamId = $channel->getAuth()->getTeamId();
+    $model = $this->services[$teamId];
+    return $model->postMessage($channel, $message, $asBot);
+  }
+
+  public function getChannelHistory(\AlfredSlack\Models\ChannelModel $channel) {
+    $teamId = $channel->getAuth()->getTeamId();
+    $model = $this->services[$teamId];
+    return $model->getChannelHistory($channel);
+  }
+
+  public function getGroupHistory(\AlfredSlack\Models\GroupModel $group) {
+    $teamId = $group->getAuth()->getTeamId();
+    $model = $this->services[$teamId];
+    return $model->getGroupHistory($group);
+  }
+
+  public function getImHistory(\AlfredSlack\Models\ImModel $im) {
+    $teamId = $im->getAuth()->getTeamId();
+    $model = $this->services[$teamId];
+    return $model->getImHistory($im);
+  }
+
+  public function refreshCache() {
+    foreach ($this->services as $model) {
+      $model->refreshCache();
+    }
+  }
+
+  public function markChannelAsRead(\AlfredSlack\Models\ChannelModel $channel) {
+    $teamId = $channel->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $model->markChannelAsRead($channel);
+  }
+
+  public function markGroupAsRead(\AlfredSlack\Models\GroupModel $group) {
+    $teamId = $group->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $model->markGroupAsRead($group);
+  }
+
+  public function markImAsRead(\AlfredSlack\Models\ImModel $im) {
+    $teamId = $im->getAuth()->team_id;
+    $model = $this->services[$teamId];
+    return $model->markImAsRead($im);
+  }
+
+  public function markAllAsRead() {
+    foreach ($this->services as $model) {
+      $model->markAllAsRead();
+    }
+  }
+
+  private function parseClientCredentials($clientCredentials) {
+    if (empty($clientCredentials)) {
+      throw new \Exception('Missing client credentials');
     }
 
-    public function isCacheLocked () {
-        return (Utils::getWorkflows()->read('cache.lock') === 1);
+    list($clientIdAndCode, $clientSecret) = explode(':', $clientCredentials);
+    list($clientId, $code) = explode('|', $clientIdAndCode);
+
+    if (empty($clientId)) {
+      throw new \Exception('Missing client ID. Please check the generated unique code.');
+    } else if (strlen($clientId) !== 23) {
+      throw new \Exception('Invalid client ID. Please check the generated unique code.');
     }
 
-    public function getTeams () {
-    	return Utils::getWorkflows()->read('teams');
+    if (empty($code)) {
+      throw new \Exception('Missing OAUTH unique code. Please check the generated unique code.');
+    } else if (strlen($code) !== 88) {
+      throw new \Exception('Invalid OAUTH unique code. Please check the generated unique code.');
     }
 
-    public function addTeam ($team) {
-        $teams = Utils::getWorkflows()->read('teams');
-        if ($teams === false) {
-            $teams = [];
-        }
-        if (is_null(Utils::find($teams, [ 'team_id' => $team['team_id'] ]))) {
-            $teams[] = [ 'team' => $team['team'], 'team_id' => $team['team_id'] ];
-            Utils::getWorkflows()->write($teams, 'teams');
-        }
+    if (empty($clientSecret)) {
+      throw new \Exception('Missing client secret. Please check the generated unique code.');
+    } else if (strlen($clientSecret) !== 32) {
+      throw new \Exception('Invalid client secret. Please check the generated unique code.');
     }
 
-    public function addToken ($token) {
-        if (empty($token)) {
-            return;
-        }
-        
-    	$interactor = new MultiCurlInteractor;
-        $interactor->setResponseFactory(new SlackResponseFactory);
-        $tempCommander = new CustomCommander($token, $interactor);
-        $auth = $tempCommander->execute('auth.test')->getBody();
+    Utils::debug("client ID: $clientId, code: $code, secret: $clientSecret");
 
-        if (Utils::getWorkflows()->setPassword('token.'.$auth['team_id'], $token)) {
-            $this->addTeam($auth);
-            // If safe password is set, remove the unsafe one
-            Utils::getWorkflows()->delete('token.'.$auth['team_id']);
-            $this->services[$auth['team_id']] = new SingleTeamSlackService($auth['team_id']);
-        }
-    }
-	
-	public function addTokenUnsafe ($token) {
-        /*
-        Utils::getWorkflows()->write($token, 'token');
-        $this->initCommander();
-        */
-    }
+    return [$clientSecret, $clientId, $code];
+  }
 
-    public function getProfileIcon ($userId) {
-    	foreach ($this->services as $model) {
-    		$icon = $model->getProfileIcon($userId);
-    		if ($icon !== false) {
-    			return $icon;
-    		}
-    	}
-    	return false;
+  private function getErrorMessage($errorCode) {
+    $message = $errorCode;
+    switch ($errorCode) {
+      case 'code_already_used':
+        $message = 'The unique code was already used.';
     }
-    
-    public function getFileIcon ($fileId) {
-    	foreach ($this->services as $model) {
-    		$icon = $model->getFileIcon($fileId);
-    		if ($icon !== false) {
-    			return $icon;
-    		}
-    	}
-    	return false;
-    }
-
-    public function getChannels ($excludeArchived = false) {
-    	$channels = [];
-    	foreach ($this->services as $model) {
-			$channels = array_merge($channels, $model->getChannels($excludeArchived));
-    	}
-    	return $channels;
-    }
-
-    public function getGroups ($excludeArchived = false) {
-    	$groups = [];
-    	foreach ($this->services as $model) {
-			$groups = array_merge($groups, $model->getGroups($excludeArchived));
-    	}
-    	return $groups;
-    }
-
-    public function getIms ($excludeDeleted = false) {
-    	$ims = [];
-    	foreach ($this->services as $model) {
-			$ims = array_merge($ims, $model->getIms($excludeDeleted));
-    	}
-    	return $ims;
-    }
-
-    public function openIm (\AlfredSlack\Models\UserModel $user) {
-    	$teamId = $user->getAuth()->team_id;
-        $model = $this->services[$teamId];
-        return $user->openIm($user);
-    }
-    
-    public function getUsers ($excludeDeleted = false) {
-    	$users = [];
-    	foreach ($this->services as $model) {
-			$users = array_merge($users, $model->getUsers($excludeDeleted));
-    	}
-    	return $users;
-    }
-
-    public function getFiles () {
-    	$files = [];
-    	foreach ($this->services as $model) {
-			$files = array_merge($files, $model->getFiles());
-    	}
-    	return $files;
-    }
-
-    public function getFile (\AlfredSlack\Models\FileModel $file) {
-        $teamId = $file->getAuth()->team_id;
-        $model = $this->services[$teamId];
-        return $model->getFile($file);
-    }
-
-    public function getStarredItems () {
-		$stars = [];
-    	foreach ($this->services as $model) {
-			$stars = array_merge($stars, $model->getStarredItems());
-    	}
-    	return $stars;
-    }
-
-    public function search ($query) {
-        $res = [];
-    	foreach ($this->services as $model) {
-    		$search = $model->search($query);
-            $res = $res + $search;
-    	}
-    	return $res;
-    }
-
-    public function getImByUser (\AlfredSlack\Models\UserModel $user) {
-        $teamId = $user->getAuth()->team_id;
-        $model = $this->services[$teamId];
-        return $model->getImByUser($user);
-    }
-
-    public function setPresence ($isAway = false) {
-    	foreach ($this->services as $model) {
-    		$model->setPresence($isAway);
-    	}
-    }
-
-    public function postMessage (\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
-        $teamId = $channel->getAuth()->getTeamId();
-        $model = $this->services[$teamId];
-        return $model->postMessage($channel, $message, $asBot);
-    }
-
-    public function getChannelHistory (\AlfredSlack\Models\ChannelModel $channel) {
-        $teamId = $channel->getAuth()->getTeamId();
-        $model = $this->services[$teamId];
-    	return $model->getChannelHistory($channel);
-    }
-
-    public function getGroupHistory (\AlfredSlack\Models\GroupModel $group) {
-        $teamId = $group->getAuth()->getTeamId();
-        $model = $this->services[$teamId];
-        return $model->getGroupHistory($group);
-    }
-
-    public function getImHistory (\AlfredSlack\Models\ImModel $im) {
-        $teamId = $im->getAuth()->getTeamId();
-        $model = $this->services[$teamId];
-    	return $model->getImHistory($im);
-    }
-
-    public function refreshCache () {
-        foreach ($this->services as $model) {
-        	$model->refreshCache();
-        }
-    }
-
-    public function markChannelAsRead (\AlfredSlack\Models\ChannelModel $channel) {
-        $teamId = $channel->getAuth()->team_id;
-    	$model = $this->services[$teamId];
-    	return $model->markChannelAsRead($channel);
-    }
-
-	public function markGroupAsRead (\AlfredSlack\Models\GroupModel $group) {
-        $teamId = $group->getAuth()->team_id;
-    	$model = $this->services[$teamId];
-    	return $model->markGroupAsRead($group);
-	}
-
-	public function markImAsRead (\AlfredSlack\Models\ImModel $im) {
-        $teamId = $im->getAuth()->team_id;
-		$model = $this->services[$teamId];
-    	return $model->markImAsRead($im);
-	}
-
-	public function markAllAsRead () {
-		foreach ($this->services as $model) {
-    		$model->markAllAsRead();
-    	}
-	}
+    return $message;
+  }
 
 }

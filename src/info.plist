@@ -17,6 +17,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 		<key>slack</key>
@@ -28,6 +30,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 	</dict>
@@ -48,12 +52,10 @@
 				<false/>
 				<key>onlyshowifquerypopulated</key>
 				<true/>
-				<key>output</key>
-				<integer>0</integer>
 				<key>removeextension</key>
 				<false/>
-				<key>sticky</key>
-				<false/>
+				<key>text</key>
+				<string></string>
 				<key>title</key>
 				<string>{query}</string>
 			</dict>
@@ -62,11 +64,15 @@
 			<key>uid</key>
 			<string>43648B07-3CF9-4E47-B15C-042D2EABCDDB</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
@@ -86,11 +92,16 @@
 				<key>script</key>
 				<string>$query = "{query}";
 $input = true;
-require_once 'scripts/index.php';</string>
+require_once 'scripts/index.php';
+</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>subtext</key>
 				<string>Slack workflow</string>
 				<key>title</key>
-				<string>Slack</string>
+				<string>Slack Workflow</string>
 				<key>type</key>
 				<integer>1</integer>
 				<key>withspace</key>
@@ -101,7 +112,7 @@ require_once 'scripts/index.php';</string>
 			<key>uid</key>
 			<string>slack</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -111,9 +122,13 @@ require_once 'scripts/index.php';</string>
 				<key>escaping</key>
 				<integer>68</integer>
 				<key>script</key>
-				<string>$query = "{query}";
-$input = false;
+				<string>$input = false;
+$query = "{query}";
 require_once 'scripts/index.php';</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>type</key>
 				<integer>1</integer>
 			</dict>
@@ -122,7 +137,7 @@ require_once 'scripts/index.php';</string>
 			<key>uid</key>
 			<string>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -131,16 +146,22 @@ require_once 'scripts/index.php';</string>
 	<dict>
 		<key>43648B07-3CF9-4E47-B15C-042D2EABCDDB</key>
 		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
 		<key>BE4D4090-FF1C-4FF4-849C-958AFD57A03F</key>
 		<dict>
+			<key>xpos</key>
+			<integer>500</integer>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
 		<key>slack</key>
 		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
