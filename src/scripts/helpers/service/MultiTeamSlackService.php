@@ -46,7 +46,10 @@ class MultiTeamSlackService implements SlackServiceInterface {
   }
 
   public function getTeams() {
-    return Utils::getWorkflows()->read('teams');
+    $teams = Utils::getWorkflows()->read('teams');
+    return Utils::filter($teams, function ($team) {
+      return !empty($team->team_id);
+    });
   }
 
   public function addTeam($team) {
@@ -54,7 +57,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
     if ($teams === false) {
       $teams = [];
     }
-    if (is_null(Utils::find($teams, ['team_id' => $team['team_id']]))) {
+    if (!empty($team['team']) && !empty($team['team_id']) && is_null(Utils::find($teams, ['team_id' => $team['team_id']]))) {
       $teams[] = ['team' => $team['team'], 'team_id' => $team['team_id']];
       Utils::getWorkflows()->write($teams, 'teams');
     }
