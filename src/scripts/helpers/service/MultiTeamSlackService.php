@@ -47,9 +47,13 @@ class MultiTeamSlackService implements SlackServiceInterface {
 
   public function getTeams() {
     $teams = Utils::getWorkflows()->read('teams');
-    return Utils::filter($teams, function ($team) {
-      return !empty($team->team_id);
-    });
+    if (!is_array($teams)) {
+      return [];
+    } else {
+      return Utils::filter($teams, function ($team) {
+        return !empty($team->team_id);
+      });
+    }
   }
 
   public function addTeam($team) {
