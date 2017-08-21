@@ -69,7 +69,7 @@ class ChannelController extends SlackController {
         'title' => '#' . $channel->getName(),
         'description' => $channel . '',
         'autocomplete' => '#' . $channel->getName() . ' ',
-        'route' => new Route('channel', 'getChannelHistory', ['channel' => $channel])
+        'route' => new Route('channel', 'openChannel', ['channel' => $channel])
       ];
     }
 
@@ -80,7 +80,7 @@ class ChannelController extends SlackController {
         'title' => '#' . $group->getName(),
         'description' => $group . '',
         'autocomplete' => '#' . $group->getName() . ' ',
-        'route' => new Route('channel', 'getChannelHistory', ['channel' => $group])
+        'route' => new Route('channel', 'openChannel', ['channel' => $group])
       ];
     }
 
@@ -91,7 +91,7 @@ class ChannelController extends SlackController {
         'title' => '@' . $user->getName(),
         'description' => $user . '',
         'autocomplete' => '@' . $user->getName() . ' ',
-        'route' => new Route('channel', 'getChannelHistory', ['channel' => $user])
+        'route' => new Route('channel', 'openChannel', ['channel' => $user])
       ];
     }
 
@@ -106,7 +106,6 @@ class ChannelController extends SlackController {
     $history = [];
     $firstResult = $results[0];
     $data = $firstResult['route']->getParams()['channel'];
-    $teamId = $data->auth->team_id;
     $icon = null;
     if ($data instanceof \AlfredSlack\Models\ChannelModel) {
       $history = $this->service->getChannelHistory($data);
