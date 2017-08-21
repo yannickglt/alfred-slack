@@ -13,8 +13,6 @@ use Frlnc\Slack\Http\SlackResponseFactory;
 
 class SingleTeamSlackService implements SlackServiceInterface {
 
-  private static $instances = [];
-
   private $commander;
   public $teamId;
 
