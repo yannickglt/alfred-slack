@@ -1,6 +1,8 @@
 alfred-slack
 ============
 
+[![Gitter](https://badges.gitter.im/yannickglt/alfred-slack.svg)](https://gitter.im/yannickglt/alfred-slack?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 Open conversation with a contact in Slack
 
 # To start
@@ -47,7 +49,7 @@ You can add several clients if you want to collaborate with several teams. You j
   ```
   slack <channel/group/user>
   ```
-  ![image](http://www.packal.org/sites/default/files/public/workflow-files/comyannickgltalfred2slack/screenshots/alfred-slack2.gif)
+  ![image](https://user-images.githubusercontent.com/1006426/29512380-5298e878-8662-11e7-9968-1ae765d4d75c.gif)
 
 - List messages from a specific channel, group or user:
 
@@ -107,3 +109,7 @@ You can add several clients if you want to collaborate with several teams. You j
     ![image](https://cloud.githubusercontent.com/assets/1006426/25771653/e8aba62a-3257-11e7-88e0-050723b7058e.png)
 
 > :warning: Never share the client secret on the web or on public repository
+
+4. Go to the section OAuth & Permissions (under the Features category), add the redirect URL `http://yannickglt.github.io/alfred-slack/` and click on `Save URLs`.
+
+    ![image](https://user-images.githubusercontent.com/1006426/29512021-5b623578-8661-11e7-96b4-6650e735b4f4.png)
