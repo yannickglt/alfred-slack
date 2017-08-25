@@ -280,8 +280,6 @@ class MultiTeamSlackService implements SlackServiceInterface {
 
     if (empty($clientId)) {
       throw new \Exception('Missing client ID. Please check the generated unique code.');
-    } else if (strlen($clientId) !== 23) {
-      throw new \Exception('Invalid client ID. Please check the generated unique code.');
     }
 
     if (empty($code)) {
