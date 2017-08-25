@@ -284,14 +284,10 @@ class MultiTeamSlackService implements SlackServiceInterface {
 
     if (empty($code)) {
       throw new \Exception('Missing OAUTH unique code. Please check the generated unique code.');
-    } else if (strlen($code) !== 88) {
-      throw new \Exception('Invalid OAUTH unique code. Please check the generated unique code.');
     }
 
     if (empty($clientSecret)) {
       throw new \Exception('Missing client secret. Please check the generated unique code.');
-    } else if (strlen($clientSecret) !== 32) {
-      throw new \Exception('Invalid client secret. Please check the generated unique code.');
     }
 
     Utils::debug("client ID: $clientId, code: $code, secret: $clientSecret");
