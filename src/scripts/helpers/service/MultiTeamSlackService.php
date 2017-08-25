@@ -275,8 +275,8 @@ class MultiTeamSlackService implements SlackServiceInterface {
       throw new \Exception('Missing client credentials');
     }
 
-    list($clientIdAndCode, $clientSecret) = explode(':', $clientCredentials);
-    list($clientId, $code) = explode('|', $clientIdAndCode);
+    list($clientIdAndCode, $clientSecret) = array_pad(explode(':', $clientCredentials, 2), 2, null);
+    list($clientId, $code) = array_pad(explode('|', $clientIdAndCode, 2), 2, null);
 
     if (empty($clientId)) {
       throw new \Exception('Missing client ID. Please check the generated unique code.');
