@@ -1,6 +1,6 @@
 (function (window) {
 
-  var REDIRECT_URI = 'http://yannickglt.github.io/alfred-slack/';
+  var REDIRECT_URI = 'https://yannickglt.github.io/alfred-slack/';
   var SCOPE = [
     'channels:history',
     'channels:write',

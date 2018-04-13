@@ -110,6 +110,6 @@ You can add several clients if you want to collaborate with several teams. You j
 
 > :warning: Never share the client secret on the web or on public repository
 
-4. Go to the section OAuth & Permissions (under the Features category), add the redirect URL `http://yannickglt.github.io/alfred-slack/` and click on `Save URLs`.
+4. Go to the section OAuth & Permissions (under the Features category), add the two redirect URLs `http://yannickglt.github.io/alfred-slack/` and `https://yannickglt.github.io/alfred-slack/` and click on `Save URLs`.
 
     ![image](https://user-images.githubusercontent.com/1006426/29512021-5b623578-8661-11e7-96b4-6650e735b4f4.png)
