@@ -8,7 +8,7 @@ Open conversation with a contact in Slack
 # To start
 1. Download and install [Slack.alfredworkflow](https://github.com/packal/repository/raw/master/com.yannickglt.alfred2.slack/slack.alfredworkflow)
 2. Create a custom app for your team following [these steps](#create-an-app-for-your-team).
-3. Once you have your client ID and Secret, visit the address [http://yannickglt.github.io/alfred-slack/](http://yannickglt.github.io/alfred-slack/) to generate a unique code for authentication in the Workflow:
+3. Once you have your client ID and Secret, visit the address [https://yannickglt.github.io/alfred-slack/](https://yannickglt.github.io/alfred-slack/) to generate a unique code for authentication in the Workflow:
 3. Launch the slack workflow with the parameter `--add-client` followed by the concatenation of the generated unique code and client Secret separated by a colon (e.g.: `UNIQUE_CODE:CLIENT_SECRET`).
 You can add several clients if you want to collaborate with several teams. You just need to repeat the two last steps.
   
