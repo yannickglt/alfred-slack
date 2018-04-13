@@ -186,8 +186,7 @@ class ChannelController extends SlackController {
         return $user->getId() === $user->getAuth()->user_id;
       });
       foreach ($meInTeams as $me) {
-        $me->setName('slackbot');
-        $me->getProfile()->real_name = 'slackbot';
+        $me->getProfile()->real_name = "{$me->getProfile()->real_name} (you)";
       }
     }
     return $users;
