@@ -19,7 +19,7 @@ Router::define(function ($router) {
       'controller' => 'config',
       'action' => 'search'
     ])
-    ->route('--presence :presence', [
+    ->route('--presence :presence?', [
       'controller' => 'config',
       'action' => 'listPresences'
     ])

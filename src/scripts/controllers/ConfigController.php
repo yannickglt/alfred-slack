@@ -90,12 +90,14 @@ class ConfigController extends SlackController {
       [
         'title' => '--presence away',
         'description' => 'Set the presence as away',
+        'icon' => 'images/circle_grey.png',
         'autocomplete' => '--presence away ',
         'route' => new Route('config', 'setPresence', ['presence' => 'away'])
       ],
       [
         'title' => '--presence active',
         'description' => 'Set the presence as active',
+        'icon' => 'images/circle_green.png',
         'autocomplete' => '--presence active ',
         'route' => new Route('config', 'setPresence', ['presence' => 'active'])
       ],
