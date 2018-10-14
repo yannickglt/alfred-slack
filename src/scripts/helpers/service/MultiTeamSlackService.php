@@ -216,6 +216,12 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
   }
 
+  public function setStatus(\AlfredSlack\Models\StatusModel $status) {
+    foreach ($this->services as $model) {
+      $model->setStatus($status);
+    }
+  }
+
   public function postMessage(\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
     $teamId = $channel->getAuth()->getTeamId();
     $model = $this->services[$teamId];

@@ -5,6 +5,8 @@ namespace AlfredSlack\Controllers;
 use AlfredSlack\Libs\Utils;
 use AlfredSlack\Libs\Route;
 use AlfredSlack\Helpers\Service\MultiTeamSlackService;
+use AlfredSlack\Models\ModelFactory;
+use AlfredSlack\Models\StatusModel;
 
 class ConfigController extends SlackController {
 
@@ -52,6 +54,12 @@ class ConfigController extends SlackController {
         'description' => 'List the items starred',
         'autocomplete' => '--stars ',
         'route' => new Route('config', 'getStarredItems', ['search' => $param])
+      ],
+      [
+        'title' => '--status',
+        'description' => 'List the custom statuses',
+        'autocomplete' => '--status ',
+        'route' => new Route('config', 'getStatuses', ['status' => $param])
       ],
       [
         'title' => '--presence',
@@ -164,6 +172,61 @@ class ConfigController extends SlackController {
     $this->render(false);
   }
 
+  public function getStatusesAction($status) {
+    $results = [
+      [
+        'title' => '--status in a meeting',
+        'description' => 'Set the custom status as "In a meeting" - 1 hour',
+        'icon' => 'images/spiral_calendar.png',
+        'autocomplete' => '--status meeting ',
+        'route' => new Route('config', 'setStatus', ['status' => 'meeting'])
+      ],
+      [
+        'title' => '--status commuting',
+        'description' => 'Set the custom status as "Commuting" - 30 minutes',
+        'icon' => 'images/bus.png',
+        'autocomplete' => '--status commuting ',
+        'route' => new Route('config', 'setStatus', ['status' => 'commuting'])
+      ],
+      [
+        'title' => '--status out sick',
+        'description' => 'Set the custom status as "Out sick" - Today',
+        'icon' => 'images/face_with_thermometer.png',
+        'autocomplete' => '--status sick ',
+        'route' => new Route('config', 'setStatus', ['status' => 'sick'])
+      ],
+      [
+        'title' => '--status vacationing',
+        'description' => 'Set the custom status as "Vacationing" - Don\'t clear',
+        'icon' => 'images/palm_tree.png',
+        'autocomplete' => '--status vacationing ',
+        'route' => new Route('config', 'setStatus', ['status' => 'vacationing'])
+      ],
+      [
+        'title' => '--status working remotely',
+        'description' => 'Set the custom status as "Working remotely" - Today',
+        'icon' => 'images/house_with_garden.png',
+        'autocomplete' => '--status remote ',
+        'route' => new Route('config', 'setStatus', ['status' => 'remote'])
+      ],
+      [
+        'title' => '--status clear',
+        'description' => 'Clear the current custom status',
+        'icon' => 'images/cross_mark.png',
+        'autocomplete' => '--status clear ',
+        'route' => new Route('config', 'setStatus', ['status' => 'clear'])
+      ]
+    ];
+
+    if (empty($status)) {
+      $this->results = $results;
+    } else {
+      $this->results = $this->filterResults($results, $status);
+    }
+
+    $this->render();
+  }
+
   public function searchAction($query) {
     $items = $this->service->search($query);
 
@@ -221,6 +284,59 @@ class ConfigController extends SlackController {
     $isAway = (strtolower($presence) === 'away');
     $this->service->setPresence($isAway);
     $this->notify('You are now marked as ​"' . ($isAway ? 'away' : 'active') . '"');
+  }
+
+  public function setStatusAction($statusName) {
+    $status = new StatusModel([
+      'status_text' => '',
+      'status_emoji' => '',
+      'status_expiration' => 0
+    ]);
+    switch ($statusName) {
+      case 'meeting':
+        $status = new StatusModel([
+          'status_text' => 'In a meeting',
+          'status_emoji' => ':spiral_calendar_pad:',
+          'status_expiration' => time() + 3600
+        ]);
+        break;
+      case 'commuting':
+        $status = new StatusModel([
+          'status_text' => 'Commuting',
+          'status_emoji' => ':bus:',
+          'status_expiration' => time() + 1800
+        ]);
+        break;
+      case 'sick':
+        $status = new StatusModel([
+          'status_text' => 'Out sick',
+          'status_emoji' => ':face_with_thermometer:',
+          'status_expiration' => strtotime(date('Y-m-d 23:59:59', time()))
+        ]);
+        break;
+      case 'vacationing':
+        $status = new StatusModel([
+          'status_text' => 'Vacationing',
+          'status_emoji' => ':palm_tree:',
+          'status_expiration' => 0
+        ]);
+        break;
+      case 'remote':
+        $status = new StatusModel([
+          'status_text' => 'Working remotely',
+          'status_emoji' => ':house_with_garden:',
+          'status_expiration' => strtotime(date('Y-m-d 23:59:59', time()))
+        ]);
+        break;
+    }
+
+    $this->service->setStatus($status);
+
+    if (empty($status->status_text)) {
+      $this->notify('Your custom status was cleared');
+    } else {
+      $this->notify('You are now marked as "' . $status->status_text . '"');
+    }
   }
 
   public function refreshCacheAction() {

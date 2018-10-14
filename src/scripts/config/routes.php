@@ -23,6 +23,10 @@ Router::define(function ($router) {
       'controller' => 'config',
       'action' => 'listPresences'
     ])
+    ->route('--status :search?', [
+      'controller' => 'config',
+      'action' => 'getStatuses'
+    ])
     ->route('--:config :param', [
       'controller' => 'config',
       'action' => 'listConfigs'
