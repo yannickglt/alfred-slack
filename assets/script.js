@@ -18,6 +18,7 @@
     'search:read',
     'stars:read',
     'team:read',
+    'users.profile:write',
     'users:read',
     'users:write'
   ];
