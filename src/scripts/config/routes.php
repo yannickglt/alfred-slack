@@ -7,11 +7,11 @@ use AlfredSlack\Libs\Router;
 Router::define(function ($router) {
 
   $router
-    ->route('--files :search', [
+    ->route('--files :search?', [
       'controller' => 'config',
       'action' => 'getFiles'
     ])
-    ->route('--stars :search', [
+    ->route('--stars :search?', [
       'controller' => 'config',
       'action' => 'getStarredItems'
     ])
