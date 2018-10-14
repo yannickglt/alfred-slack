@@ -212,6 +212,10 @@ class SingleTeamSlackService implements SlackServiceInterface {
     $this->commander->execute('users.setPresence', ['presence' => $isAway ? 'away' : 'auto'])->getBody();
   }
 
+  public function setStatus(\AlfredSlack\Models\StatusModel $status) {
+    $this->commander->execute('users.profile.set', ['profile' => json_encode($status) ]) ->getBody();
+  }
+
   public function postMessage(\AlfredSlack\Models\ChatInterface $channel, $message, $asBot = false) {
     Utils::debug("channel: {$channel->getId()}, message: $message, asBot: $asBot");
 
