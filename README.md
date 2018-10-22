@@ -108,6 +108,12 @@ You can add several clients if you want to collaborate with several teams. You j
   slack --presence <active|away>
   ```
 
+- Set the custom status
+
+  ```
+  slack --status <in a meeting|commuting|out sick|vacationing|working remotely|clear>
+  ```
+
 ### Create an app for your team
 1. Go to the URL [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and click on the button `Create a Slack app`.
 
