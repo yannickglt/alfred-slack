@@ -32,7 +32,7 @@ class Workflows {
     $this->home = exec('printf $HOME');
 
     if (file_exists('info.plist')):
-      $this->bundle = $this->get('bundleid', 'info.plist');
+      $this->bundle = $this->get('bundleid', 'info');
     endif;
 
     if (!is_null($bundleid)):
