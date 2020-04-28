@@ -30,6 +30,10 @@ class SlackRouter {
       'type' => 'input'
     ],
     [
+      'name' => 'listTeams',
+      'type' => 'input'
+    ],
+    [
       'name' => 'getChannelsWithMessage',
       'type' => 'input'
     ],
@@ -43,6 +47,10 @@ class SlackRouter {
     ],
     [
       'name' => 'saveClient',
+      'type' => 'output'
+    ],
+    [
+      'name' => 'removeClient',
       'type' => 'output'
     ],
     [
@@ -225,6 +233,13 @@ class SlackRouter {
         'params' => [$data->clientCredentials]
       ];
     }
+  }
+
+  private function checkRemoveClient($teamName) {
+    return [
+      'action' => 'removeClient',
+      'params' => [$teamName]
+    ];
   }
 
   private function checkSaveToken($query) {

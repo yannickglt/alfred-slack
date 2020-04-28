@@ -20,6 +20,12 @@ class ConfigController extends SlackController {
         'route' => new Route('config', 'saveClient', ['clientCredentials' => $param])
       ],
       [
+        'title' => '--remove-client',
+        'description' => 'Remove a Slack client',
+        'autocomplete' => '--remove-client ',
+        'route' => new Route('config', 'removeClient', ['team' => $param])
+      ],
+      [
         'title' => '--add-token',
         'description' => 'Add a Slack token in the keychain (deprecated)',
         'autocomplete' => '--add-token ',
@@ -125,6 +131,29 @@ class ConfigController extends SlackController {
         'icon' => $icon,
         'autocomplete' => '--files ' . $file->getName(),
         'route' => new Route('config', 'openFile', ['file' => $file])
+      ];
+    }
+
+    if (empty($search)) {
+      $this->results = $results;
+    } else {
+      $this->results = $this->filterResults($results, $search);
+    }
+
+    $this->render(false);
+  }
+
+  public function getTeamsAction($search) {
+    $teams = $this->service->getTeams();
+
+    $results = [];
+    foreach ($teams as $team) {
+      $results[] = [
+        'id' => $team->team_id,
+        'title' => $team->team,
+        'description' => 'Remove the Slack client "'.$team->team.'"',
+        'autocomplete' => '--remove-client ' . $team->team,
+        'route' => new Route('config', 'removeClient', ['team' => $team->team])
       ];
     }
 
@@ -267,6 +296,15 @@ class ConfigController extends SlackController {
     try {
       $this->service->addClient($clientCredentials);
       $this->notify('Client saved successfully');
+    } catch (\Exception $e) {
+      $this->notify($e->getMessage());
+    }
+  }
+
+  public function removeClientAction($team) {
+    try {
+      $this->service->removeTeam($team);
+      $this->notify('Client removed successfully');
     } catch (\Exception $e) {
       $this->notify($e->getMessage());
     }

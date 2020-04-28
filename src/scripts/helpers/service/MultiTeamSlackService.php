@@ -67,6 +67,18 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
   }
 
+  public function removeTeam($teamName) {
+    $teams = Utils::getWorkflows()->read('teams');
+    if ($teams === false) {
+      $teams = [];
+    }
+    $formattedTeamName = strtolower($teamName);
+    $teams = array_filter($teams, function ($team) use ($formattedTeamName) {
+      return strtolower($team->team) !== $formattedTeamName;
+    });
+    Utils::getWorkflows()->write($teams, 'teams');
+  }
+
   public function addClient($clientCredentials) {
     list($clientSecret, $clientId, $code) = $this->parseClientCredentials($clientCredentials);
 

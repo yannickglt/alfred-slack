@@ -27,6 +27,10 @@ Router::define(function ($router) {
       'controller' => 'config',
       'action' => 'getStatuses'
     ])
+    ->route('--remove-client :search?', [
+      'controller' => 'config',
+      'action' => 'getTeams'
+    ])
     ->route('--:config :param', [
       'controller' => 'config',
       'action' => 'listConfigs'

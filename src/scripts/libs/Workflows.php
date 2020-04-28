@@ -32,10 +32,10 @@ class Workflows {
     $this->home = exec('printf $HOME');
 
     if (file_exists('info.plist')):
+      $this->bundle = $this->get('bundleid', 'info.plist');
+    elseif (file_exists('info')):
       $this->bundle = $this->get('bundleid', 'info');
-    endif;
-
-    if (!is_null($bundleid)):
+    elseif (!is_null($bundleid)):
       $this->bundle = $bundleid;
     endif;
 
@@ -530,7 +530,6 @@ class Workflows {
     if (is_null($service)):
       $service = $this->bundle;
     endif;
-
     $password = exec("security 2>&1 find-generic-password -s $service -a $account -w", $output, $status);
 
     return ($status === 0) ? $password : null;
