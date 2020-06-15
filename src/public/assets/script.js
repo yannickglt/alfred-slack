@@ -22,7 +22,7 @@
     'users:read',
     'users:write'
   ];
-  var OAUTH_URL = 'https://slack.com/oauth?client_id=__CLIENT_ID__&scope=__SCOPE__&team=__TEAM__&redirect_uri=__REDIRECT_URI__';
+  var OAUTH_URL = 'https://slack.com/oauth/authorize?client_id=__CLIENT_ID__&scope=__SCOPE__&team=__TEAM__&redirect_uri=__REDIRECT_URI__';
 
   window.addEventListener('load', function () {
 
