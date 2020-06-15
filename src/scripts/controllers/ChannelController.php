@@ -109,7 +109,6 @@ class ChannelController extends SlackController {
     $icon = null;
     if ($data instanceof \AlfredSlack\Models\ChannelModel) {
       $history = $this->service->getChannelHistory($data);
-      $this->service->markChannelAsRead($data);
     } elseif ($data instanceof \AlfredSlack\Models\GroupModel) {
       $history = $this->service->getGroupHistory($data);
       $this->service->markGroupAsRead($data);

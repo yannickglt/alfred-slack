@@ -301,11 +301,6 @@ class SingleTeamSlackService implements SlackServiceInterface {
 
   }
 
-  public function markChannelAsRead(\AlfredSlack\Models\ChannelModel $channel) {
-    $now = time();
-    $this->commander->executeAsync('channels.mark', ['channel' => $channel->getId(), 'ts' => $now]);
-  }
-
   public function markGroupAsRead(\AlfredSlack\Models\GroupModel $group) {
     $now = time();
     $this->commander->executeAsync('groups.mark', ['channel' => $group->getId(), 'ts' => $now]);
@@ -319,11 +314,6 @@ class SingleTeamSlackService implements SlackServiceInterface {
   public function markAllAsRead() {
     $now = time();
     $requests = [];
-
-    $channels = $this->getChannels();
-    foreach ($channels as $channel) {
-      $requests[] = ['command' => 'channels.mark', 'parameters' => ['channel' => $channel->getId(), 'ts' => $now]];
-    }
 
     $groups = $this->getGroups();
     foreach ($groups as $group) {

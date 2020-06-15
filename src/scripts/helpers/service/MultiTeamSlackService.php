@@ -264,12 +264,6 @@ class MultiTeamSlackService implements SlackServiceInterface {
     }
   }
 
-  public function markChannelAsRead(\AlfredSlack\Models\ChannelModel $channel) {
-    $teamId = $channel->getAuth()->team_id;
-    $model = $this->services[$teamId];
-    return $model->markChannelAsRead($channel);
-  }
-
   public function markGroupAsRead(\AlfredSlack\Models\GroupModel $group) {
     $teamId = $group->getAuth()->team_id;
     $model = $this->services[$teamId];

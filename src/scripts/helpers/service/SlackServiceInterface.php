@@ -38,8 +38,6 @@ interface SlackServiceInterface {
 
   public function refreshCache();
 
-  public function markChannelAsRead(\AlfredSlack\Models\ChannelModel $channel);
-
   public function markGroupAsRead(\AlfredSlack\Models\GroupModel $group);
 
   public function markImAsRead(\AlfredSlack\Models\ImModel $im);
