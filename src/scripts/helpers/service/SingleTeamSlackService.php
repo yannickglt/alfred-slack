@@ -76,7 +76,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
       if ($excludeArchived === true) {
         $params['exclude_archived'] = '1';
       }
-      $channels = $this->commander->execute('channels.list', $params)->getBody()['channels'];
+      $channels = $this->commander->execute('conversations.list', $params)->getBody()['channels'];
       $auth = $this->getAuth();
       foreach ($channels as $index => $channel) {
         $channels[$index] = Utils::extend($channel, ['auth' => $auth]);
@@ -236,7 +236,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
   }
 
   public function getChannelHistory(\AlfredSlack\Models\ChannelModel $channel) {
-    return ModelFactory::getModels($this->commander->execute('channels.history', ['channel' => $channel->getId()])->getBody()['messages'], '\AlfredSlack\Models\MessageModel');
+    return ModelFactory::getModels($this->commander->execute('conversations.history', ['channel' => $channel->getId()])->getBody()['messages'], '\AlfredSlack\Models\MessageModel');
   }
 
   public function getGroupHistory(\AlfredSlack\Models\GroupModel $group) {
