@@ -2,9 +2,9 @@
 
   var REDIRECT_URI = 'https://yannickglt.github.io/alfred-slack/';
   var SCOPE = [
-    'conversations:history',
-    'conversations:write',
-    'conversations:read',
+    'channels:history',
+    'channels:write',
+    'channels:read',
     'chat:write:bot',
     'chat:write:user',
     'groups:history',
