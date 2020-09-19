@@ -21,16 +21,6 @@ class ChannelController extends SlackController {
       ];
     }
 
-    $groups = $this->service->getGroups(true);
-    foreach ($groups as $group) {
-      $results[] = [
-        'title' => '#' . $group->getName(),
-        'description' => $group . '',
-        'autocomplete' => '#' . $group->getName() . ' ',
-        'route' => new Route('channel', 'openChannel', ['channel' => $group])
-      ];
-    }
-
     $users = $this->getUsers();
     foreach ($users as $user) {
       $icon = $this->service->getProfileIcon($user->getId());
@@ -70,17 +60,6 @@ class ChannelController extends SlackController {
         'description' => $channel . '',
         'autocomplete' => '#' . $channel->getName() . ' ',
         'route' => new Route('channel', 'openChannel', ['channel' => $channel])
-      ];
-    }
-
-    $groups = $this->service->getGroups(true);
-    foreach ($groups as $group) {
-      $results[] = [
-        'id' => $group->getId(),
-        'title' => '#' . $group->getName(),
-        'description' => $group . '',
-        'autocomplete' => '#' . $group->getName() . ' ',
-        'route' => new Route('channel', 'openChannel', ['channel' => $group])
       ];
     }
 

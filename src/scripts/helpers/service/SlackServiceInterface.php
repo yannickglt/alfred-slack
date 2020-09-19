@@ -10,8 +10,10 @@ interface SlackServiceInterface {
 
   public function getChannels($excludeArchived);
 
+  /** @deprecated  */
   public function getGroups($excludeArchived);
 
+  /** @deprecated  */
   public function getIms($excludeDeleted);
 
   public function openIm(\AlfredSlack\Models\UserModel $user);
@@ -24,6 +26,7 @@ interface SlackServiceInterface {
 
   public function getStarredItems();
 
+  /** @deprecated  */
   public function getImByUser(\AlfredSlack\Models\UserModel $user);
 
   public function setPresence($isAway);

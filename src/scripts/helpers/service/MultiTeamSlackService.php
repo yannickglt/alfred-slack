@@ -155,6 +155,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
     return $channels;
   }
 
+  /** @deprecated  */
   public function getGroups($excludeArchived = false) {
     $groups = [];
     foreach ($this->services as $model) {
@@ -163,6 +164,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
     return $groups;
   }
 
+  /** @deprecated  */
   public function getIms($excludeDeleted = false) {
     $ims = [];
     foreach ($this->services as $model) {
@@ -216,6 +218,7 @@ class MultiTeamSlackService implements SlackServiceInterface {
     return $res;
   }
 
+  /** @deprecated  */
   public function getImByUser(\AlfredSlack\Models\UserModel $user) {
     $teamId = $user->getAuth()->team_id;
     $model = $this->services[$teamId];

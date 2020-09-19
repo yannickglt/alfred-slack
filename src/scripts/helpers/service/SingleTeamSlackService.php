@@ -87,6 +87,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
     return ModelFactory::getModels($channels, '\AlfredSlack\Models\ChannelModel');
   }
 
+  /** @deprecated  */
   public function getGroups($excludeArchived = false) {
     $groups = Utils::getWorkflows()->read('groups.' . $this->teamId);
     if ($groups === false) {
@@ -105,6 +106,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
     return ModelFactory::getModels($groups, '\AlfredSlack\Models\GroupModel');
   }
 
+  /** @deprecated  */
   public function getIms($excludeDeleted = false) {
     $ims = Utils::getWorkflows()->read('ims.' . $this->teamId);
     if ($ims === false) {
@@ -188,6 +190,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
     return $messages + $files;
   }
 
+  /** @deprecated */
   public function getImByUser(\AlfredSlack\Models\UserModel $user) {
     $userId = $user->getId();
     // Get the IM id if a user
@@ -220,9 +223,9 @@ class SingleTeamSlackService implements SlackServiceInterface {
     Utils::debug("channel: {$channel->getId()}, message: $message, asBot: $asBot");
 
     $id = $channel->getId();
-    if ($channel instanceof \AlfredSlack\Models\UserModel) {
-      $id = $this->getImByUser($channel)->getId();
-    }
+//    if ($channel instanceof \AlfredSlack\Models\UserModel) {
+//      $id = $this->getImByUser($channel)->getId();
+//    }
 
     return $this->commander->execute('chat.postMessage', [
       'channel' => $id,
@@ -262,9 +265,6 @@ class SingleTeamSlackService implements SlackServiceInterface {
 
     // Refresh groups
     Utils::getWorkflows()->delete('groups.' . $this->teamId);
-    $groups = $this->getGroups();
-    $groups = null;
-    Utils::log("Groups refreshed for team $teamName");
 
     // Refresh user icons
     $users = $this->getUsers();
@@ -295,10 +295,6 @@ class SingleTeamSlackService implements SlackServiceInterface {
 
     // Refresh ims
     Utils::getWorkflows()->delete('ims.' . $this->teamId);
-    $ims = $this->getIms();
-    $ims = null;
-    Utils::log("Ims refreshed for team $teamName");
-
   }
 
   public function markGroupAsRead(\AlfredSlack\Models\GroupModel $group) {
@@ -314,16 +310,6 @@ class SingleTeamSlackService implements SlackServiceInterface {
   public function markAllAsRead() {
     $now = time();
     $requests = [];
-
-    $groups = $this->getGroups();
-    foreach ($groups as $group) {
-      $requests[] = ['command' => 'groups.mark', 'parameters' => ['channel' => $group->getId(), 'ts' => $now]];
-    }
-
-    $ims = $this->getIms();
-    foreach ($ims as $im) {
-      $requests[] = ['command' => 'im.mark', 'parameters' => ['channel' => $im->getId(), 'ts' => $now]];
-    }
 
     return array_map(function ($e) {
       return $e->getBody();
