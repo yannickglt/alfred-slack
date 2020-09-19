@@ -85,14 +85,15 @@ class Controller {
   }
 
   protected function filterResults(array $array, $search) {
-    $search = strtolower(trim($search));
+    $search = strtolower(Utils::deburr(trim($search)));
+
     $found = [];
     $results = [];
     foreach ($array as $id => $element) {
 
-      $title = strtolower(trim($element['title']));
-      $autocomplete = strtolower(trim($element['autocomplete']));
-      $description = strtolower(trim($element['description']));
+      $title = strtolower(Utils::deburr(trim($element['title'])));
+      $autocomplete = strtolower(Utils::deburr(trim($element['autocomplete'])));
+      $description = strtolower(Utils::deburr(trim($element['description'])));
 
       if ($autocomplete === $search) {
         if (!isset($found[$id])) {

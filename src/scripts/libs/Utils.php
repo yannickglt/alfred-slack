@@ -109,6 +109,10 @@ class Utils {
     error_log($str);
   }
 
+  public static function deburr($str) {
+    return str_replace("'", '', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str));
+  }
+
   public static function debug($var) {
     ob_start();
     var_dump($var);
