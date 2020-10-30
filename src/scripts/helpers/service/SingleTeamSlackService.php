@@ -110,7 +110,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
   public function getIms($excludeDeleted = false) {
     $ims = Utils::getWorkflows()->read('ims.' . $this->teamId);
     if ($ims === false) {
-      $ims = $this->commander->execute('im.list')->getBody()['ims'];
+      $ims = $this->commander->execute('conversations.list')->getBody()['channels'];
       $auth = $this->getAuth();
       foreach ($ims as $index => $im) {
         $ims[$index] = Utils::extend($im, ['auth' => $auth]);
