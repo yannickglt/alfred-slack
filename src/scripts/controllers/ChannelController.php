@@ -126,12 +126,6 @@ class ChannelController extends SlackController {
 
     $id = $channel->getId();
 
-    // Get the IM id if a user
-    if ($channel instanceof \AlfredSlack\Models\UserModel) {
-      $im = $this->service->getImByUser($channel);
-      $id = $im->getId();
-    }
-
     $url = 'slack://channel?id=' . $id . '&team=' . $channel->getAuth()->getTeamId();
 
     Utils::openUrl($url);
