@@ -72,7 +72,7 @@ class SingleTeamSlackService implements SlackServiceInterface {
   public function getChannels($excludeArchived = false) {
     $channels = Utils::getWorkflows()->read('channels.' . $this->teamId);
     if ($channels === false) {
-      $params = [];
+      $params['types'] = 'public_channel,private_channel';
       if ($excludeArchived === true) {
         $params['exclude_archived'] = '1';
       }
